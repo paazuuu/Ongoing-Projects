@@ -6,22 +6,22 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
 model Member {
-  id                   String   @id @default(cuid())
+  id                   String   @id @default(uuid()) @db.Uuid
   name                 String
   team                 String
-  qualifications       Json     @default("[]")
+  qualifications       String[] @default([])
   availableHoursStart  String   @map("available_hours_start") @default("08:00")
   availableHoursEnd    String   @map("available_hours_end") @default("18:00")
-  availableAreas       Json     @default("[]")
+  availableAreas       String[] @default([])
   notes                String   @default("")
   isActive             Boolean  @default(true) @map("is_active")
-  createdAt            DateTime @default(now()) @map("created_at")
-  updatedAt            DateTime @updatedAt @map("updated_at")
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt            DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
   projectAssignments   ProjectMemberAssignment[]
@@ -31,11 +31,11 @@ model Member {
 }
 
 model ExternalPartner {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid()) @db.Uuid
   name      String
   isActive  Boolean  @default(true) @map("is_active")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
   projectAssignments ProjectExternalPartnerAssignment[]
@@ -44,7 +44,7 @@ model ExternalPartner {
 }
 
 model Project {
-  id              String   @id @default(cuid())
+  id              String   @id @default(uuid()) @db.Uuid
   name            String
   date            String
   workTimeStart   String   @map("work_time_start")
@@ -53,10 +53,10 @@ model Project {
   workContent     String   @default("") @map("work_content")
   requiredMembers Int      @default(1) @map("required_members")
   notes           String   @default("")
-  leadMemberId    String?  @map("lead_member_id")
+  leadMemberId    String?  @map("lead_member_id") @db.Uuid
   isActive        Boolean  @default(true) @map("is_active")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt       DateTime @updatedAt @map("updated_at") @db.Timestamptz
 
   // Relations
   leadMember              Member?                            @relation("ProjectLeader", fields: [leadMemberId], references: [id])
@@ -67,10 +67,10 @@ model Project {
 }
 
 model ProjectMemberAssignment {
-  id        String   @id @default(cuid())
-  projectId String   @map("project_id")
-  memberId  String   @map("member_id")
-  createdAt DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid()) @db.Uuid
+  projectId String   @map("project_id") @db.Uuid
+  memberId  String   @map("member_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   // Relations
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
@@ -81,12 +81,12 @@ model ProjectMemberAssignment {
 }
 
 model ProjectExternalPartnerAssignment {
-  id                 String   @id @default(cuid())
-  projectId          String   @map("project_id")
-  partnerId          String   @map("partner_id")
+  id                 String   @id @default(uuid()) @db.Uuid
+  projectId          String   @map("project_id") @db.Uuid
+  partnerId          String   @map("partner_id") @db.Uuid
   memberCount        Int      @default(1) @map("member_count")
   representativeName String   @default("") @map("representative_name")
-  createdAt          DateTime @default(now()) @map("created_at")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz
 
   // Relations
   project Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)

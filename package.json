@@ -6,10 +6,15 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "db:generate": "prisma generate",
+    "db:push": "prisma db push",
+    "db:migrate": "prisma migrate dev",
+    "db:studio": "prisma studio"
   },
   "dependencies": {
     "@expo/vector-icons": "^14.0.0",
+    "@prisma/client": "^5.0.0",
     "@react-native-async-storage/async-storage": "1.23.1",
     "@supabase/supabase-js": "^2.39.0",
     "expo": "~54.0.0",
@@ -38,6 +43,7 @@
     "@typescript-eslint/parser": "^7.7.0",
     "eslint": "^8.57.0",
     "eslint-config-expo": "^7.0.0",
+    "prisma": "^5.0.0",
     "typescript": "~5.3.3"
   },
   "private": true
