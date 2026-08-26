@@ -18,7 +18,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
     date: defaultDate ?? '',
-    endDate: '',
+    endDate: defaultDate ?? '', // 既定は開始日と同じ（当日）
     workTimeStart: '09:00',
     workTimeEnd: '17:00',
     location: '',
@@ -38,7 +38,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
       setFormData({
         name: project.name,
         date: project.date,
-        endDate: project.endDate ?? '',
+        endDate: project.endDate ?? project.date, // 既定は開始日と同じ（当日）
         workTimeStart: project.workTime.start,
         workTimeEnd: project.workTime.end,
         location: project.location,
@@ -81,6 +81,16 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
 
   const handleChange = (field: keyof ProjectFormData, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  // 開始日を変更したら、終了日は基本的に当日へ自動追従する。
+  // ただしユーザーが開始日より後の終了日を明示的に設定している場合は、その値を保持する。
+  const handleStartDateChange = (newDate: string) => {
+    setFormData(prev => {
+      const endIsCustom = Boolean(prev.endDate) && prev.endDate > prev.date;
+      const keepEnd = endIsCustom && prev.endDate >= newDate;
+      return { ...prev, date: newDate, endDate: keepEnd ? prev.endDate : newDate };
+    });
   };
 
   const handleLabelToggle = (labelId: string) => {
@@ -149,13 +159,13 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
                 type="date"
                 required
                 value={formData.date}
-                onChange={(e) => handleChange('date', e.target.value)}
+                onChange={(e) => handleStartDateChange(e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                終了日（任意）
+                終了日
               </label>
               <input
                 type="date"
@@ -164,7 +174,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
                 onChange={(e) => handleChange('endDate', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
-              <p className="text-xs text-gray-400 mt-1">複数日にまたがる場合に指定（空欄で単日）</p>
+              <p className="text-xs text-gray-400 mt-1">既定は当日。複数日にまたがる場合のみ変更してください</p>
             </div>
           </div>
 
