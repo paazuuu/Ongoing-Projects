@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Project, Member, ConflictAlert, ExternalPartner } from '../types';
+import { Project, Member, ConflictAlert, ExternalPartner, Label, ProjectPriority } from '../types';
 import MemberDetailModal from './MemberDetailModal';
-import { 
-  Calendar, 
-  Clock, 
-  MapPin, 
-  FileText, 
-  Users, 
-  Edit3, 
+import MemberAvatar from './MemberAvatar';
+import LabelPicker from './LabelPicker';
+import ChecklistSection from './ChecklistSection';
+import CommentsSection from './CommentsSection';
+import { WORKFLOW_STATUSES, workflowStatusLabel, workflowStatusColor, priorityColor } from '../utils/workflowStatus';
+import {
+  Calendar,
+  Clock,
+  MapPin,
+  FileText,
+  Users,
+  Edit3,
   Trash2,
   AlertTriangle,
   CheckCircle,
@@ -17,35 +22,19 @@ import {
   X
 } from 'lucide-react';
 
-interface MemberAvatarProps {
-  member: Member;
-  size?: 'sm' | 'md';
-}
-
-const MemberAvatar: React.FC<MemberAvatarProps> = ({ member, size = 'sm' }) => {
-  const sizeClasses = size === 'sm' ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm';
-  const initials = member.name.split(' ').map(n => n[0]).join('').slice(0, 2);
-  
-  return (
-    <div
-      className={`${sizeClasses} bg-blue-500 text-white rounded-full flex items-center justify-center font-medium shadow-sm cursor-pointer hover:bg-blue-600 transition-colors border-2 border-white`}
-      title={member.name}
-    >
-      {initials}
-    </div>
-  );
-};
-
 interface ProjectDetailProps {
   project: Project;
   members: Member[];
   externalPartners: ExternalPartner[];
   projects: Project[];
+  labels: Label[];
+  isDatabaseConnected: boolean;
   onMemberAssignment: (projectId: string, memberIds: string[]) => void;
   onLeaderAssignment: (projectId: string, leaderId: string | undefined) => void;
   onUpdateProjects: (projects: Project[]) => void;
   onProjectDelete: (projectId: string) => void;
   onEditProject: () => void;
+  onCreateLabel: (name: string, color: string) => void;
   conflicts: ConflictAlert[];
 }
 
@@ -53,10 +42,15 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   project,
   members,
   externalPartners,
+  projects,
+  labels,
+  isDatabaseConnected,
   onMemberAssignment,
   onLeaderAssignment,
+  onUpdateProjects,
   onProjectDelete,
   onEditProject,
+  onCreateLabel,
   conflicts,
 }) => {
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -76,7 +70,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const assignedPartners = project.externalPartners.map(assignment => {
     const partner = externalPartners.find(p => p.id === assignment.partnerId);
     return partner ? { ...partner, ...assignment } : null;
-  }).filter(Boolean);
+  }).filter((partner): partner is NonNullable<typeof partner> => partner !== null);
 
   const totalExternalMembers = project.externalPartners.reduce((sum, assignment) => 
     sum + assignment.memberCount, 0
@@ -194,7 +188,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     try {
       console.log('💾 データベースに変更を保存中...');
       
-      // 実際にSupabaseに保存を実行
+      // APIサーバーに変更を保存
       const updatedProjects = projects.map(p =>
         p.id === project.id ? project : p
       );
@@ -215,9 +209,33 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     setReplacementData(null);
   };
 
+  const handleWorkflowStatusChange = (workflowStatus: Project['workflowStatus']) => {
+    const updatedProjects = projects.map(p =>
+      p.id === project.id ? { ...p, workflowStatus, updatedAt: new Date().toISOString() } : p
+    );
+    onUpdateProjects(updatedProjects);
+  };
+
+  const handlePriorityChange = (priority: ProjectPriority) => {
+    const updatedProjects = projects.map(p =>
+      p.id === project.id ? { ...p, priority, updatedAt: new Date().toISOString() } : p
+    );
+    onUpdateProjects(updatedProjects);
+  };
+
+  const handleLabelToggle = (labelId: string) => {
+    const newLabelIds = project.labelIds.includes(labelId)
+      ? project.labelIds.filter(id => id !== labelId)
+      : [...project.labelIds, labelId];
+    const updatedProjects = projects.map(p =>
+      p.id === project.id ? { ...p, labelIds: newLabelIds, updatedAt: new Date().toISOString() } : p
+    );
+    onUpdateProjects(updatedProjects);
+  };
+
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="h-full flex flex-col">
+      <div className="h-full flex flex-col overflow-y-auto">
         {/* ヘッダー */}
         <div className={`p-6 bg-white border-b shadow-sm ${hasConflicts ? 'bg-red-50 border-red-200' : ''}`}>
           {/* 更新ボタン */}
@@ -339,6 +357,45 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                 </div>
               )}
             </div>
+          </div>
+
+          {/* ワークフロー状況・優先度・ラベル */}
+          <div className="mt-4 flex flex-wrap items-center gap-4">
+            <div className="flex items-center gap-1">
+              {WORKFLOW_STATUSES.map((status) => (
+                <button
+                  key={status}
+                  onClick={() => handleWorkflowStatusChange(status)}
+                  className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+                    project.workflowStatus === status
+                      ? workflowStatusColor(status)
+                      : 'bg-white text-gray-400 border-gray-200 hover:bg-gray-50'
+                  }`}
+                >
+                  {workflowStatusLabel(status)}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-500">優先度:</span>
+              <select
+                value={project.priority}
+                onChange={(e) => handlePriorityChange(e.target.value as ProjectPriority)}
+                className={`text-xs font-medium rounded-full border px-2 py-1 ${priorityColor(project.priority)}`}
+              >
+                <option value="low">低</option>
+                <option value="medium">中</option>
+                <option value="high">高</option>
+              </select>
+            </div>
+
+            <LabelPicker
+              labels={labels}
+              selectedLabelIds={project.labelIds}
+              onToggle={handleLabelToggle}
+              onCreateLabel={onCreateLabel}
+            />
           </div>
 
           {/* 協力業者表示 */}
@@ -471,6 +528,12 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               )}
             </Droppable>
           </div>
+        </div>
+
+        {/* チェックリスト・コメント */}
+        <div className="border-t bg-white p-6 grid grid-cols-2 gap-6">
+          <ChecklistSection projectId={project.id} isDatabaseConnected={isDatabaseConnected} />
+          <CommentsSection projectId={project.id} isDatabaseConnected={isDatabaseConnected} />
         </div>
 
         {/* 入れ替えモーダル */}

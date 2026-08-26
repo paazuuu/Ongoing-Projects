@@ -1,4 +1,4 @@
-import { Member, Project, ExternalPartner } from '../types';
+import { Member, Project, ExternalPartner, Label } from '../types';
 
 export const mockMembers: Member[] = [
   {
@@ -94,6 +94,12 @@ export const mockExternalPartners: ExternalPartner[] = [
   }
 ];
 
+export const mockLabels: Label[] = [
+  { id: 'label-1', name: '緊急', color: '#ef4444', createdAt: '2025-01-01T00:00:00Z' },
+  { id: 'label-2', name: '定期点検', color: '#3b82f6', createdAt: '2025-01-01T00:00:00Z' },
+  { id: 'label-3', name: '要見積', color: '#f59e0b', createdAt: '2025-01-01T00:00:00Z' }
+];
+
 export const mockProjects: Project[] = [
   {
     id: 'project-1',
@@ -113,6 +119,9 @@ export const mockProjects: Project[] = [
         representativeName: '田中 一郎'
       }
     ],
+    labelIds: ['label-2'],
+    workflowStatus: 'in_progress',
+    priority: 'high',
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
@@ -129,6 +138,9 @@ export const mockProjects: Project[] = [
     assignedMembers: ['member-3'],
     leadMemberId: 'member-3',
     externalPartners: [],
+    labelIds: ['label-2'],
+    workflowStatus: 'todo',
+    priority: 'medium',
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
@@ -145,6 +157,9 @@ export const mockProjects: Project[] = [
     assignedMembers: [],
     leadMemberId: undefined,
     externalPartners: [],
+    labelIds: [],
+    workflowStatus: 'todo',
+    priority: 'low',
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
@@ -167,6 +182,9 @@ export const mockProjects: Project[] = [
         representativeName: '田中 一郎'
       }
     ],
+    labelIds: ['label-1'],
+    workflowStatus: 'done',
+    priority: 'high',
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
@@ -183,6 +201,9 @@ export const mockProjects: Project[] = [
     assignedMembers: [],
     leadMemberId: undefined,
     externalPartners: [],
+    labelIds: ['label-3'],
+    workflowStatus: 'todo',
+    priority: 'medium',
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'

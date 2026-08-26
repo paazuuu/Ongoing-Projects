@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Project, Member, ConflictAlert, ExternalPartner } from '../types';
 import { Calendar, Clock, MapPin, Users, AlertTriangle, CheckCircle, Plus } from 'lucide-react';
 import { checkScheduleConflicts } from '../utils/conflictChecker';
+import MemberAvatar from './MemberAvatar';
+import { workflowStatusLabel, workflowStatusColor } from '../utils/workflowStatus';
 
 interface DashboardProps {
   projects: Project[];
@@ -75,27 +77,13 @@ const Dashboard: React.FC<DashboardProps> = ({
     }
   };
 
-  const MemberAvatar: React.FC<{ member: Member; size?: 'sm' | 'md' }> = ({ member, size = 'sm' }) => {
-    const sizeClasses = size === 'sm' ? 'w-6 h-6 text-xs' : 'w-8 h-8 text-sm';
-    const initials = member.name.split(' ').map(n => n[0]).join('').slice(0, 2);
-    
-    return (
-      <div
-        className={`${sizeClasses} bg-blue-500 text-white rounded-full flex items-center justify-center font-medium shadow-sm`}
-        title={member.name}
-      >
-        {initials}
-      </div>
-    );
-  };
-
   const ProjectCard: React.FC<{ project: Project; showDate?: boolean }> = ({ project, showDate = false }) => {
     const status = getProjectStatus(project);
     const assignedMembers = activeMembers.filter(m => project.assignedMembers.includes(m.id));
     const assignedPartners = project.externalPartners.map(assignment => {
       const partner = externalPartners.find(p => p.id === assignment.partnerId);
       return partner ? { ...partner, ...assignment } : null;
-    }).filter(Boolean);
+    }).filter((partner): partner is NonNullable<typeof partner> => partner !== null);
     const totalExternalMembers = project.externalPartners.reduce((sum, assignment) => 
       sum + assignment.memberCount, 0
     );
@@ -125,6 +113,9 @@ const Dashboard: React.FC<DashboardProps> = ({
             {hasConflicts && (
               <AlertTriangle className="w-4 h-4 text-red-500" />
             )}
+            <div className={`px-2 py-1 rounded-full text-xs font-medium border ${workflowStatusColor(project.workflowStatus)}`}>
+              {workflowStatusLabel(project.workflowStatus)}
+            </div>
             <div className={`px-2 py-1 rounded-full text-xs font-medium border ${getStatusColor(status)}`}>
               {getStatusText(status)}
             </div>
@@ -154,7 +145,7 @@ const Dashboard: React.FC<DashboardProps> = ({
             {/* 担当メンバー（リーダーバッジ付き） */}
             {leadMember && (
               <div className="relative">
-                <MemberAvatar member={leadMember} />
+                <MemberAvatar member={leadMember} size="sm" />
                 <div className="absolute -top-1 -right-1 w-3 h-3 bg-yellow-500 rounded-full flex items-center justify-center">
                   <span className="text-xs text-white font-bold">L</span>
                 </div>
@@ -166,7 +157,7 @@ const Dashboard: React.FC<DashboardProps> = ({
               .filter(m => m.id !== project.leadMemberId)
               .slice(0, 3)
               .map((member) => (
-                <MemberAvatar key={member.id} member={member} />
+                <MemberAvatar key={member.id} member={member} size="sm" />
               ))}
             
             {/* 協力業者 */}

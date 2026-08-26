@@ -7,11 +7,15 @@ function App() {
     members,
     projects,
     externalPartners,
+    labels,
     isLoading,
     isDatabaseConnected,
     updateMembers,
     updateProjects,
     updateExternalPartners,
+    createLabel,
+    updateLabel,
+    deleteLabel,
   } = useDatabaseData();
 
   if (isLoading) {
@@ -31,9 +35,13 @@ function App() {
         projects={projects}
         members={members}
         externalPartners={externalPartners}
+        labels={labels}
         onUpdateProjects={updateProjects}
         onUpdateMembers={updateMembers}
         onUpdateExternalPartners={updateExternalPartners}
+        onCreateLabel={createLabel}
+        onUpdateLabel={updateLabel}
+        onDeleteLabel={deleteLabel}
         isDatabaseConnected={isDatabaseConnected}
       />
     </div>

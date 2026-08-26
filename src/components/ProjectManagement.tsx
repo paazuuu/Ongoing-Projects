@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Member, Project, ConflictAlert, ExternalPartner } from '../types';
+import { Member, Project, ConflictAlert, ExternalPartner, Label, ProjectWorkflowStatus, ProjectSaveData } from '../types';
 import Dashboard from './Dashboard';
 import MemberListSidebar from './MemberListSidebar';
 import ProjectDetail from './ProjectDetail';
@@ -8,19 +8,22 @@ import MemberManagement from './MemberManagement';
 import MemberDetailView from './MemberDetailView';
 import ExternalPartnerManagement from './ExternalPartnerManagement';
 import ConflictAlerts from './ConflictAlerts';
-import SupabaseSettings from './SupabaseSettings';
-import SupabaseStatus from './SupabaseStatus';
+import KanbanBoard from './KanbanBoard';
 import DebugPanel from './DebugPanel';
-import { Plus, Users, FolderOpen, Home, Building2 } from 'lucide-react';
+import { Plus, Users, FolderOpen, Home, Building2, Trello } from 'lucide-react';
 import { checkScheduleConflicts } from '../utils/conflictChecker';
 
 interface ProjectManagementProps {
   projects: Project[];
   members: Member[];
   externalPartners: ExternalPartner[];
+  labels: Label[];
   onUpdateProjects: (projects: Project[]) => void;
   onUpdateMembers: (members: Member[]) => void;
   onUpdateExternalPartners: (partners: ExternalPartner[]) => void;
+  onCreateLabel: (name: string, color: string) => void;
+  onUpdateLabel: (id: string, updates: { name?: string; color?: string }) => void;
+  onDeleteLabel: (id: string) => void;
   isDatabaseConnected: boolean;
 }
 
@@ -28,9 +31,13 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
   projects,
   members,
   externalPartners,
+  labels,
   onUpdateProjects,
   onUpdateMembers,
   onUpdateExternalPartners,
+  onCreateLabel,
+  onUpdateLabel,
+  onDeleteLabel,
   isDatabaseConnected,
 }) => {
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -39,13 +46,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
   const [showMemberManagement, setShowMemberManagement] = useState(false);
   const [showPartnerManagement, setShowPartnerManagement] = useState(false);
   const [showDashboard, setShowDashboard] = useState(true);
+  const [showKanbanBoard, setShowKanbanBoard] = useState(false);
   const [conflicts, setConflicts] = useState<ConflictAlert[]>([]);
-  const [showSupabaseSettings, setShowSupabaseSettings] = useState(false);
-  const [showDatabaseSettings, setShowDatabaseSettings] = useState(false);
-
-  const handleDeleteSupabaseSettings = () => {
-    // 設定削除後の処理
-  };
 
   const activeProjects = projects.filter(p => p.isActive);
   const activeMembers = members.filter(m => m.isActive);
@@ -56,6 +58,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMemberManagement(false);
     setShowPartnerManagement(false);
     setShowDashboard(false);
+    setShowKanbanBoard(false);
   };
 
   const handleCreateProject = () => {
@@ -65,6 +68,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMemberManagement(false);
     setShowPartnerManagement(false);
     setShowDashboard(false);
+    setShowKanbanBoard(false);
   };
 
   const handleShowMemberManagement = () => {
@@ -74,6 +78,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMemberManagement(true);
     setShowPartnerManagement(false);
     setShowDashboard(false);
+    setShowKanbanBoard(false);
   };
 
   const handleShowPartnerManagement = () => {
@@ -83,6 +88,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMemberManagement(false);
     setShowPartnerManagement(true);
     setShowDashboard(false);
+    setShowKanbanBoard(false);
   };
 
   const handleShowDashboard = () => {
@@ -92,9 +98,29 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMemberManagement(false);
     setShowPartnerManagement(false);
     setShowDashboard(true);
+    setShowKanbanBoard(false);
   };
 
-  const handleProjectSave = (projectData: any) => {
+  const handleShowKanbanBoard = () => {
+    setSelectedProject(null);
+    setSelectedMember(null);
+    setShowProjectForm(false);
+    setShowMemberManagement(false);
+    setShowPartnerManagement(false);
+    setShowDashboard(false);
+    setShowKanbanBoard(true);
+  };
+
+  const handleProjectStatusChange = (projectId: string, workflowStatus: ProjectWorkflowStatus) => {
+    const updatedProjects = projects.map(p =>
+      p.id === projectId
+        ? { ...p, workflowStatus, updatedAt: new Date().toISOString() }
+        : p
+    );
+    onUpdateProjects(updatedProjects);
+  };
+
+  const handleProjectSave = (projectData: ProjectSaveData) => {
     const now = new Date().toISOString();
     
     if (selectedProject) {
@@ -110,6 +136,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
       const newProject: Project = {
         id: `project-${Date.now()}`,
         ...projectData,
+        workflowStatus: 'todo',
         assignedMembers: [],
         isActive: true,
         createdAt: now,
@@ -155,15 +182,6 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     const updatedProjects = projects.map(p =>
       p.id === projectId
         ? { ...p, leadMemberId: leaderId, updatedAt: new Date().toISOString() }
-        : p
-    );
-    onUpdateProjects(updatedProjects);
-  };
-
-  const handleExternalPartnersUpdate = (projectId: string, partnerIds: string[]) => {
-    const updatedProjects = projects.map(p =>
-      p.id === projectId
-        ? { ...p, externalPartners: partnerIds, updatedAt: new Date().toISOString() }
         : p
     );
     onUpdateProjects(updatedProjects);
@@ -243,6 +261,17 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
               <Building2 className="w-4 h-4" />
               協力業者管理
             </button>
+            <button
+              onClick={handleShowKanbanBoard}
+              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showKanbanBoard
+                  ? 'bg-white bg-opacity-30 text-white'
+                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+              }`}
+            >
+              <Trello className="w-4 h-4" />
+              ステータスボード
+            </button>
           </div>
         </div>
 
@@ -253,16 +282,12 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
           </div>
         )}
 
-        {/* Supabase設定状況 */}
-        <div className="p-4 border-b">
-          <SupabaseStatus 
-            onOpenSettings={() => setShowSupabaseSettings(true)}
-            onDeleteSettings={handleDeleteSupabaseSettings}
-          />
-          {isDatabaseConnected && (
-            <div className="mt-2 text-xs text-green-600">
-              データベース連携中
-            </div>
+        {/* データベース連携状況 */}
+        <div className="p-4 border-b text-xs">
+          {isDatabaseConnected ? (
+            <span className="text-green-600">データベース連携中</span>
+          ) : (
+            <span className="text-gray-400">モックデータ使用中</span>
           )}
         </div>
 
@@ -287,11 +312,22 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
             onProjectSelect={handleProjectSelect}
             onCreateProject={handleCreateProject}
           />
+        ) : showKanbanBoard ? (
+          <KanbanBoard
+            projects={projects}
+            members={activeMembers}
+            labels={labels}
+            conflicts={conflicts}
+            onProjectSelect={handleProjectSelect}
+            onProjectStatusChange={handleProjectStatusChange}
+          />
         ) : showProjectForm ? (
           <div className="flex-1 p-6">
             <ProjectForm
               project={selectedProject}
               externalPartners={externalPartners}
+              labels={labels}
+              onCreateLabel={onCreateLabel}
               onSave={handleProjectSave}
               onCancel={() => setShowProjectForm(false)}
             />
@@ -323,15 +359,18 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
         ) : selectedProject ? (
           <div className="flex-1">
             <ProjectDetail
-              project={selectedProject}
+              project={projects.find(p => p.id === selectedProject.id) ?? selectedProject}
               members={activeMembers}
               externalPartners={externalPartners}
               projects={projects}
+              labels={labels}
+              isDatabaseConnected={isDatabaseConnected}
               onMemberAssignment={handleMemberAssignment}
               onLeaderAssignment={handleLeaderAssignment}
               onUpdateProjects={onUpdateProjects}
               onProjectDelete={handleProjectDelete}
               onEditProject={() => setShowProjectForm(true)}
+              onCreateLabel={onCreateLabel}
               conflicts={conflicts}
             />
           </div>
@@ -348,11 +387,6 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
           </div>
         )}
       </div>
-
-      {/* Supabase設定モーダル */}
-      {showSupabaseSettings && (
-        <SupabaseSettings onClose={() => setShowSupabaseSettings(false)} />
-      )}
 
       {/* デバッグパネル */}
       <DebugPanel

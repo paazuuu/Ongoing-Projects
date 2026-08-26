@@ -26,7 +26,7 @@ const ProjectColumn: React.FC<ProjectColumnProps> = ({
   const assignedPartners = project.externalPartners.map(assignment => {
     const partner = externalPartners.find(p => p.id === assignment.partnerId);
     return partner ? { ...partner, ...assignment } : null;
-  }).filter(Boolean);
+  }).filter((partner): partner is NonNullable<typeof partner> => partner !== null);
 
   const totalExternalMembers = project.externalPartners.reduce((sum, assignment) => 
     sum + assignment.memberCount, 0

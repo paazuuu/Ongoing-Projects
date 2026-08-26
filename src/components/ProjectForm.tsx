@@ -1,15 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { Project, ProjectFormData, ExternalPartner, ExternalPartnerAssignment } from '../types';
+import { Project, ProjectFormData, ProjectSaveData, ExternalPartner, ExternalPartnerAssignment, Label } from '../types';
 import { Save, X, Plus, Trash2 } from 'lucide-react';
+import LabelPicker from './LabelPicker';
+import { priorityColor } from '../utils/workflowStatus';
 
 interface ProjectFormProps {
   project: Project | null;
   externalPartners: ExternalPartner[];
-  onSave: (data: ProjectFormData) => void;
+  labels: Label[];
+  onCreateLabel: (name: string, color: string) => void;
+  onSave: (data: ProjectSaveData) => void;
   onCancel: () => void;
 }
 
-const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, onSave, onCancel }) => {
+const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, labels, onCreateLabel, onSave, onCancel }) => {
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
     date: '',
@@ -19,6 +23,8 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, on
     workContent: '',
     requiredMembers: 1,
     notes: '',
+    priority: 'medium',
+    labelIds: [],
   });
 
   const [partnerAssignments, setPartnerAssignments] = useState<ExternalPartnerAssignment[]>([]);
@@ -36,6 +42,8 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, on
         workContent: project.workContent,
         requiredMembers: project.requiredMembers,
         notes: project.notes,
+        priority: project.priority,
+        labelIds: project.labelIds,
       });
       setPartnerAssignments(project.externalPartners || []);
     }
@@ -43,7 +51,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, on
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     const projectData = {
       name: formData.name,
       date: formData.date,
@@ -55,6 +63,8 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, on
       workContent: formData.workContent,
       requiredMembers: formData.requiredMembers,
       notes: formData.notes,
+      priority: formData.priority,
+      labelIds: formData.labelIds,
       externalPartners: partnerAssignments,
       leadMemberId: project?.leadMemberId,
     };
@@ -64,6 +74,15 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, on
 
   const handleChange = (field: keyof ProjectFormData, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleLabelToggle = (labelId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      labelIds: prev.labelIds.includes(labelId)
+        ? prev.labelIds.filter(id => id !== labelId)
+        : [...prev.labelIds, labelId],
+    }));
   };
 
   const handleAddPartner = (partnerId: string) => {
@@ -165,6 +184,34 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, on
                 value={formData.workTimeEnd}
                 onChange={(e) => handleChange('workTimeEnd', e.target.value)}
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                優先度
+              </label>
+              <select
+                value={formData.priority}
+                onChange={(e) => handleChange('priority', e.target.value)}
+                className={`w-full border rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${priorityColor(formData.priority)}`}
+              >
+                <option value="low">低</option>
+                <option value="medium">中</option>
+                <option value="high">高</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                ラベル
+              </label>
+              <LabelPicker
+                labels={labels}
+                selectedLabelIds={formData.labelIds}
+                onToggle={handleLabelToggle}
+                onCreateLabel={onCreateLabel}
               />
             </div>
           </div>

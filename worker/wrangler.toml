@@ -1,0 +1,15 @@
+name = "ongoing-projects-api"
+main = "src/index.ts"
+compatibility_date = "2024-09-23"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "ongoing-projects-db"
+database_id = "<run `wrangler d1 create ongoing-projects-db` and paste the id here>"
+
+[[r2_buckets]]
+binding = "ATTACHMENTS"
+bucket_name = "ongoing-projects-attachments"
+
+[vars]
+ALLOWED_ORIGIN = "http://localhost:5173"
