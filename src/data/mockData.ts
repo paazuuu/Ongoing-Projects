@@ -1,4 +1,7 @@
-import { Member, Project, ExternalPartner, Label } from '../types';
+import { Member, Project, ExternalPartner, Label, CalendarEvent } from '../types';
+
+const toDateStr = (offsetDays: number): string =>
+  new Date(Date.now() + offsetDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
 
 export const mockMembers: Member[] = [
   {
@@ -205,6 +208,41 @@ export const mockProjects: Project[] = [
     workflowStatus: 'todo',
     priority: 'medium',
     isActive: true,
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z'
+  }
+];
+
+export const mockCalendarEvents: CalendarEvent[] = [
+  {
+    id: 'event-1',
+    title: '安全衛生ミーティング',
+    date: toDateStr(0),
+    isAllDay: false,
+    startTime: '17:30',
+    endTime: '18:00',
+    color: '#10b981',
+    memo: '全チーム参加。今月のヒヤリハット共有',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z'
+  },
+  {
+    id: 'event-2',
+    title: '車両点検（社用車）',
+    date: toDateStr(1),
+    isAllDay: true,
+    color: '#f59e0b',
+    memo: '',
+    createdAt: '2025-01-01T00:00:00Z',
+    updatedAt: '2025-01-01T00:00:00Z'
+  },
+  {
+    id: 'event-3',
+    title: '有給（佐藤）',
+    date: toDateStr(3),
+    isAllDay: true,
+    color: '#a855f7',
+    memo: '終日不在',
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
   }

@@ -11,12 +11,13 @@ interface ProjectFormProps {
   onCreateLabel: (name: string, color: string) => void;
   onSave: (data: ProjectSaveData) => void;
   onCancel: () => void;
+  defaultDate?: string; // カレンダーから新規作成する際の初期日付
 }
 
-const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, labels, onCreateLabel, onSave, onCancel }) => {
+const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, labels, onCreateLabel, onSave, onCancel, defaultDate }) => {
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
-    date: '',
+    date: defaultDate ?? '',
     workTimeStart: '09:00',
     workTimeEnd: '17:00',
     location: '',
