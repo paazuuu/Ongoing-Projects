@@ -71,15 +71,29 @@ export const buildItemsByDate = (
 
   for (const p of projects) {
     if (!p.isActive) continue;
-    push(p.date, {
-      kind: 'project',
-      id: p.id,
-      date: p.date,
-      title: p.name,
-      color: projectColor(p.priority),
-      timeLabel: `${p.workTime.start}-${p.workTime.end}`,
-      sortKey: p.workTime.start,
-    });
+    const start = p.date;
+    const end = p.endDate && p.endDate >= p.date ? p.endDate : p.date;
+    const isMultiDay = end > start;
+    const timeLabel = isMultiDay ? `${start}〜${end}` : `${p.workTime.start}-${p.workTime.end}`;
+
+    // 複数日にまたがる場合は各日にバーを表示（最大62日で打ち切り）
+    const cursor = new Date(`${start}T00:00:00`);
+    const endDate = new Date(`${end}T00:00:00`);
+    let guard = 0;
+    while (cursor <= endDate && guard < 62) {
+      const key = toDateKey(cursor);
+      push(key, {
+        kind: 'project',
+        id: p.id,
+        date: key,
+        title: p.name,
+        color: projectColor(p.priority),
+        timeLabel,
+        sortKey: p.workTime.start,
+      });
+      cursor.setDate(cursor.getDate() + 1);
+      guard += 1;
+    }
   }
 
   for (const e of events) {

@@ -134,6 +134,7 @@ export const mockProjects: Project[] = [
     id: 'project-2',
     name: '△△道路 改良工事',
     date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 明日
+    endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5日後まで（複数日）
     workTime: { start: '08:00', end: '16:00' },
     location: '神奈川県横浜市',
     workContent: '路盤整正・アスファルト舗装',
@@ -224,6 +225,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
     endTime: '18:00',
     color: '#10b981',
     memo: '全チーム参加。今月のヒヤリハット共有',
+    memberIds: [], // 全体共有
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
   },
@@ -234,6 +236,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
     isAllDay: true,
     color: '#f59e0b',
     memo: '',
+    memberIds: ['member-4'], // 鈴木が対応
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
   },
@@ -244,6 +247,7 @@ export const mockCalendarEvents: CalendarEvent[] = [
     isAllDay: true,
     color: '#a855f7',
     memo: '終日不在',
+    memberIds: ['member-2'], // 佐藤 花子
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
   }

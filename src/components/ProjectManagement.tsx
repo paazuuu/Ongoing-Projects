@@ -398,6 +398,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
           <MyScheduleView
             projects={activeProjects}
             members={activeMembers}
+            calendarEvents={calendarEvents}
             onProjectSelect={handleProjectSelect}
           />
         ) : showCalendar ? (
@@ -472,6 +473,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
               externalPartners={externalPartners}
               projects={projects}
               labels={labels}
+              calendarEvents={calendarEvents}
               isDatabaseConnected={isDatabaseConnected}
               onMemberAssignment={handleMemberAssignment}
               onLeaderAssignment={handleLeaderAssignment}

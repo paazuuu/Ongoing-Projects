@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Project, Member, ConflictAlert, ExternalPartner, Label, ProjectPriority } from '../types';
+import { Project, Member, ConflictAlert, ExternalPartner, Label, ProjectPriority, CalendarEvent } from '../types';
 import MemberDetailModal from './MemberDetailModal';
 import MemberAvatar from './MemberAvatar';
 import LabelPicker from './LabelPicker';
 import ChecklistSection from './ChecklistSection';
 import CommentsSection from './CommentsSection';
 import { WORKFLOW_STATUSES, workflowStatusLabel, workflowStatusColor, priorityColor } from '../utils/workflowStatus';
+import { getMemberAvailability, projectDateRange, formatDateRange } from '../utils/availability';
 import {
   Calendar,
   Clock,
@@ -18,6 +19,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Crown,
+  Ban,
+  Award,
   Plus,
   X
 } from 'lucide-react';
@@ -28,6 +31,7 @@ interface ProjectDetailProps {
   externalPartners: ExternalPartner[];
   projects: Project[];
   labels: Label[];
+  calendarEvents: CalendarEvent[];
   isDatabaseConnected: boolean;
   onMemberAssignment: (projectId: string, memberIds: string[]) => void;
   onLeaderAssignment: (projectId: string, leaderId: string | undefined) => void;
@@ -44,6 +48,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   externalPartners,
   projects,
   labels,
+  calendarEvents,
   isDatabaseConnected,
   onMemberAssignment,
   onLeaderAssignment,
@@ -66,6 +71,18 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const assignedMembers = members.filter(m => project.assignedMembers.includes(m.id));
   const availableMembers = members.filter(m => !project.assignedMembers.includes(m.id));
   const leadMember = project.leadMemberId ? members.find(m => m.id === project.leadMemberId) : null;
+
+  // この日程での各作業員の空き状況（他案件と日程が重なるかで判定）
+  const availabilityByMember = new Map(
+    members.map((m) => [m.id, getMemberAvailability(m, project, projects, calendarEvents)])
+  );
+  const isMemberAvailable = (memberId: string) =>
+    availabilityByMember.get(memberId)?.available ?? true;
+  // 未配置の作業員を「空き」と「他案件と重複＝割当不可」に分ける
+  const freeMembers = availableMembers.filter((m) => isMemberAvailable(m.id));
+  const busyMembers = availableMembers.filter((m) => !isMemberAvailable(m.id));
+  const range = projectDateRange(project);
+  const rangeLabel = formatDateRange(range.start, range.end);
   
   const assignedPartners = project.externalPartners.map(assignment => {
     const partner = externalPartners.find(p => p.id === assignment.partnerId);
@@ -81,6 +98,11 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   );
 
   const handleMemberAdd = (memberId: string) => {
+    // この日程で他案件と重なる作業員は割り当て不可
+    if (!isMemberAvailable(memberId)) {
+      console.log('🚫 日程重複のため割当不可:', memberId);
+      return;
+    }
     console.log('👤 メンバー追加:', memberId, 'プロジェクト:', project.name);
     const newAssignedMembers = [...new Set([...project.assignedMembers, memberId])];
     console.log('📋 新しい配置リスト:', newAssignedMembers);
@@ -134,8 +156,9 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   };
 
   const handleLeaderAssignment = (memberId: string) => {
-    // メンバーが配置されていない場合は先に配置
+    // 未配置かつ日程重複の作業員はリーダーにも設定不可
     if (!project.assignedMembers.includes(memberId)) {
+      if (!isMemberAvailable(memberId)) return;
       handleMemberAdd(memberId);
     }
     setHasUnsavedChanges(true);
@@ -280,7 +303,12 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  <span>{formatDate(project.date)}</span>
+                  <span>
+                    {formatDate(project.date)}
+                    {project.endDate && project.endDate > project.date && (
+                      <> 〜 {formatDate(project.endDate)}</>
+                    )}
+                  </span>
                 </div>
                 <div className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
@@ -418,53 +446,115 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
         {/* メンバー配置エリア */}
         <div className="flex-1 flex">
-          {/* 利用可能メンバー */}
-          <div className="w-1/2 border-r border-gray-200">
+          {/* 選択可能な作業員（この日程で空いている人だけをスケジュールから抽出） */}
+          <div className="w-1/2 border-r border-gray-200 flex flex-col">
             <div className="p-4 bg-gray-50 border-b">
-              <h3 className="font-semibold text-gray-700">利用可能メンバー ({availableMembers.length}名)</h3>
+              <h3 className="font-semibold text-gray-700">選択可能な作業員</h3>
+              <p className="text-xs text-gray-500 mt-0.5">
+                {rangeLabel} に空きがある人（{freeMembers.length}名）をドラッグして配置
+              </p>
             </div>
             <Droppable droppableId="available">
               {(provided, snapshot) => (
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className={`p-4 min-h-full ${
+                  className={`p-4 flex-1 min-h-full overflow-y-auto ${
                     snapshot.isDraggingOver ? 'bg-blue-50' : ''
                   }`}
                 >
-                  <div className="grid grid-cols-4 gap-3">
-                    {availableMembers.map((member, index) => (
+                  {/* 空きあり（ドラッグ可能） */}
+                  <div className="space-y-2">
+                    {freeMembers.map((member, index) => (
                       <Draggable key={member.id} draggableId={member.id} index={index}>
-                        {(provided, snapshot) => (
+                        {(dragProvided, dragSnapshot) => (
                           <div
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            className={`relative group ${
-                              snapshot.isDragging ? 'rotate-3 scale-105 opacity-80' : ''
+                            ref={dragProvided.innerRef}
+                            {...dragProvided.draggableProps}
+                            {...dragProvided.dragHandleProps}
+                            className={`group flex items-center gap-3 bg-white rounded-lg border p-2 cursor-grab transition-all ${
+                              dragSnapshot.isDragging
+                                ? 'shadow-2xl border-blue-400 rotate-1'
+                                : 'border-gray-200 hover:border-blue-300 hover:shadow-sm'
                             }`}
                           >
-                            <div
-                              onClick={() => setSelectedMember(member)}
-                              className="cursor-pointer"
-                            >
+                            <div onClick={() => setSelectedMember(member)} className="cursor-pointer">
                               <MemberAvatar member={member} />
                             </div>
-                            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <button
-                                onClick={() => handleLeaderAssignment(member.id)}
-                                className="bg-yellow-500 text-white p-1 rounded-full shadow-lg hover:bg-yellow-600"
-                                title="担当に設定"
-                              >
-                                <Crown className="w-3 h-3" />
-                              </button>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1">
+                                <span className="font-medium text-gray-900 text-sm truncate">
+                                  {member.name}
+                                </span>
+                                <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                  空き
+                                </span>
+                              </div>
+                              <div className="text-xs text-gray-500 truncate">{member.team}</div>
+                              {member.qualifications.length > 0 && (
+                                <div className="flex items-center gap-1 text-[11px] text-gray-400 truncate">
+                                  <Award className="w-3 h-3 flex-shrink-0" />
+                                  <span className="truncate">{member.qualifications.join('・')}</span>
+                                </div>
+                              )}
                             </div>
+                            <button
+                              onClick={() => handleLeaderAssignment(member.id)}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity bg-yellow-500 text-white p-1 rounded-full shadow hover:bg-yellow-600 flex-shrink-0"
+                              title="担当（リーダー）に設定して配置"
+                            >
+                              <Crown className="w-3 h-3" />
+                            </button>
                           </div>
                         )}
                       </Draggable>
                     ))}
                   </div>
                   {provided.placeholder}
+
+                  {freeMembers.length === 0 && (
+                    <div className="text-center text-gray-400 py-6 text-sm">
+                      この日程に空いている作業員がいません
+                    </div>
+                  )}
+
+                  {/* 割当不可（他案件と日程が重複） */}
+                  {busyMembers.length > 0 && (
+                    <div className="mt-6">
+                      <div className="flex items-center gap-1 text-xs font-semibold text-gray-500 mb-2">
+                        <Ban className="w-3.5 h-3.5" />
+                        この日程は割当不可（他案件と重複・{busyMembers.length}名）
+                      </div>
+                      <div className="space-y-2">
+                        {busyMembers.map((member) => {
+                          const reason = availabilityByMember.get(member.id)?.reason ?? '';
+                          return (
+                            <div
+                              key={member.id}
+                              onClick={() => setSelectedMember(member)}
+                              title={reason}
+                              className="flex items-center gap-3 bg-gray-50 rounded-lg border border-dashed border-gray-300 p-2 opacity-70 cursor-not-allowed select-none"
+                            >
+                              <div className="grayscale">
+                                <MemberAvatar member={member} />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-1">
+                                  <span className="font-medium text-gray-500 text-sm truncate line-through">
+                                    {member.name}
+                                  </span>
+                                  <span className="text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded-full flex-shrink-0">
+                                    予定あり
+                                  </span>
+                                </div>
+                                <div className="text-[11px] text-red-500 truncate">{reason}</div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </Droppable>

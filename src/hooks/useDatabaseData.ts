@@ -10,7 +10,9 @@ const loadStoredEvents = (): CalendarEvent[] => {
     const raw = window.localStorage.getItem(EVENTS_STORAGE_KEY);
     if (!raw) return mockCalendarEvents;
     const parsed = JSON.parse(raw) as CalendarEvent[];
-    return Array.isArray(parsed) ? parsed : mockCalendarEvents;
+    if (!Array.isArray(parsed)) return mockCalendarEvents;
+    // 旧データに memberIds が無い場合を補完
+    return parsed.map((ev) => ({ ...ev, memberIds: ev.memberIds ?? [] }));
   } catch {
     return mockCalendarEvents;
   }
@@ -212,6 +214,7 @@ export const useDatabaseData = () => {
       endTime: data.isAllDay ? undefined : data.endTime,
       color: data.color,
       memo: data.memo,
+      memberIds: data.memberIds,
       createdAt: now,
       updatedAt: now,
     };
@@ -242,6 +245,7 @@ export const useDatabaseData = () => {
               endTime: data.isAllDay ? undefined : data.endTime,
               color: data.color,
               memo: data.memo,
+              memberIds: data.memberIds,
               updatedAt: now,
             }
           : ev

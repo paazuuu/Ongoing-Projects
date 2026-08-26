@@ -20,7 +20,8 @@ export type ProjectPriority = 'low' | 'medium' | 'high';
 export interface Project {
   id: string;
   name: string;
-  date: string;
+  date: string; // 開始日（YYYY-MM-DD）
+  endDate?: string; // 終了日（複数日にまたがる場合。未設定なら date と同日=単日）
   workTime: {
     start: string;
     end: string;
@@ -58,6 +59,7 @@ export interface CalendarEvent {
   endTime?: string; // HH:mm
   color: string; // 表示色（TIMETREEのカラーラベル相当）
   memo: string;
+  memberIds: string[]; // ひも付く作業員（空=全体/共有の予定）
   createdAt: string;
   updatedAt: string;
 }
@@ -84,6 +86,7 @@ export interface EventFormData {
   endTime: string;
   color: string;
   memo: string;
+  memberIds: string[];
 }
 
 export interface ChecklistItem {
@@ -137,6 +140,7 @@ export interface ConflictAlert {
 export interface ProjectFormData {
   name: string;
   date: string;
+  endDate: string; // 終了日（空文字なら単日）
   workTimeStart: string;
   workTimeEnd: string;
   location: string;
@@ -150,6 +154,7 @@ export interface ProjectFormData {
 export interface ProjectSaveData {
   name: string;
   date: string;
+  endDate?: string;
   workTime: {
     start: string;
     end: string;

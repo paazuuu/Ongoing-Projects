@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { CalendarEvent, EventFormData } from '../types';
+import { CalendarEvent, EventFormData, Member } from '../types';
 import { EVENT_COLORS } from '../utils/calendar';
-import { X, Save, Trash2, Clock } from 'lucide-react';
+import { X, Save, Trash2, Clock, Users } from 'lucide-react';
 
 interface EventFormProps {
   event: CalendarEvent | null; // null=新規
   defaultDate: string; // 新規時の初期日付
+  members: Member[];
   onSave: (data: EventFormData) => void;
   onDelete?: (id: string) => void;
   onClose: () => void;
 }
 
-const EventForm: React.FC<EventFormProps> = ({ event, defaultDate, onSave, onDelete, onClose }) => {
+const EventForm: React.FC<EventFormProps> = ({ event, defaultDate, members, onSave, onDelete, onClose }) => {
   const [formData, setFormData] = useState<EventFormData>({
     title: '',
     date: defaultDate,
@@ -20,6 +21,7 @@ const EventForm: React.FC<EventFormProps> = ({ event, defaultDate, onSave, onDel
     endTime: '10:00',
     color: EVENT_COLORS[2].value, // グリーン
     memo: '',
+    memberIds: [],
   });
 
   useEffect(() => {
@@ -32,11 +34,21 @@ const EventForm: React.FC<EventFormProps> = ({ event, defaultDate, onSave, onDel
         endTime: event.endTime ?? '10:00',
         color: event.color,
         memo: event.memo,
+        memberIds: event.memberIds ?? [],
       });
     } else {
       setFormData((prev) => ({ ...prev, date: defaultDate }));
     }
   }, [event, defaultDate]);
+
+  const toggleMember = (memberId: string) => {
+    setFormData((prev) => ({
+      ...prev,
+      memberIds: prev.memberIds.includes(memberId)
+        ? prev.memberIds.filter((id) => id !== memberId)
+        : [...prev.memberIds, memberId],
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,6 +148,39 @@ const EventForm: React.FC<EventFormProps> = ({ event, defaultDate, onSave, onDel
                   style={{ backgroundColor: c.value }}
                 />
               ))}
+            </div>
+          </div>
+
+          {/* 対象の作業員（ひも付け） */}
+          <div>
+            <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-2">
+              <Users className="w-4 h-4 text-gray-400" />
+              対象の作業員
+            </label>
+            <p className="text-xs text-gray-400 mb-2">
+              選ぶと、その人はこの日に他案件へ割り当てできなくなります（未選択＝全体の予定）
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {members.length === 0 && (
+                <span className="text-xs text-gray-400">登録された作業員がいません</span>
+              )}
+              {members.map((m) => {
+                const selected = formData.memberIds.includes(m.id);
+                return (
+                  <button
+                    key={m.id}
+                    type="button"
+                    onClick={() => toggleMember(m.id)}
+                    className={`text-sm px-2.5 py-1 rounded-full border transition-colors ${
+                      selected
+                        ? 'bg-blue-600 text-white border-blue-600'
+                        : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                    }`}
+                  >
+                    {m.name}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
