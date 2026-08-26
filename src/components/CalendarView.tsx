@@ -10,7 +10,7 @@ import {
 } from '../utils/calendar';
 import { isMemberAssigned } from '../utils/projectFilter';
 import EventForm from './EventForm';
-import { ChevronLeft, ChevronRight, Plus, CalendarDays, FolderOpen, Clock } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus, CalendarDays, FolderOpen, Clock, Users } from 'lucide-react';
 
 interface CalendarViewProps {
   projects: Project[];
@@ -50,9 +50,23 @@ const CalendarView: React.FC<CalendarViewProps> = ({
     () => (filterMemberId ? projects.filter((p) => isMemberAssigned(p, filterMemberId)) : projects),
     [projects, filterMemberId]
   );
+  // 担当者で絞り込み時は、その人にひも付いた予定と全体共有の予定のみ表示
+  const visibleEvents = useMemo(
+    () =>
+      filterMemberId
+        ? calendarEvents.filter(
+            (e) => e.memberIds.includes(filterMemberId) || e.memberIds.length === 0
+          )
+        : calendarEvents,
+    [calendarEvents, filterMemberId]
+  );
+  const memberNameById = useMemo(
+    () => new Map(members.map((m) => [m.id, m.name])),
+    [members]
+  );
   const itemsByDate = useMemo(
-    () => buildItemsByDate(visibleProjects, calendarEvents),
-    [visibleProjects, calendarEvents]
+    () => buildItemsByDate(visibleProjects, visibleEvents),
+    [visibleProjects, visibleEvents]
   );
 
   const selectedItems: CalendarItem[] = itemsByDate.get(selectedDate) ?? [];
@@ -260,40 +274,55 @@ const CalendarView: React.FC<CalendarViewProps> = ({
                 <p className="text-sm">予定はありません</p>
               </div>
             ) : (
-              selectedItems.map((item) => (
-                <button
-                  key={`${item.kind}-${item.id}`}
-                  onClick={() => handleItemClick(item)}
-                  className="w-full text-left bg-white rounded-lg border border-gray-200 p-3 hover:shadow-sm transition-shadow"
-                >
-                  <div className="flex items-start gap-2">
-                    <span
-                      className="mt-1 w-3 h-3 rounded-full flex-shrink-0"
-                      style={{ backgroundColor: item.color }}
-                    />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium text-gray-800 truncate">{item.title}</p>
-                      <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
-                        <Clock className="w-3 h-3" />
-                        <span>{item.timeLabel}</span>
-                        <span className="ml-1 inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
-                          {item.kind === 'project' ? (
-                            <>
-                              <FolderOpen className="w-2.5 h-2.5" />
-                              プロジェクト
-                            </>
-                          ) : (
-                            <>
-                              <CalendarDays className="w-2.5 h-2.5" />
-                              予定
-                            </>
-                          )}
-                        </span>
+              selectedItems.map((item) => {
+                const assigneeIds =
+                  item.kind === 'project'
+                    ? projects.find((p) => p.id === item.id)?.assignedMembers ?? []
+                    : calendarEvents.find((e) => e.id === item.id)?.memberIds ?? [];
+                const assigneeNames = assigneeIds
+                  .map((id) => memberNameById.get(id))
+                  .filter((n): n is string => Boolean(n));
+                return (
+                  <button
+                    key={`${item.kind}-${item.id}`}
+                    onClick={() => handleItemClick(item)}
+                    className="w-full text-left bg-white rounded-lg border border-gray-200 p-3 hover:shadow-sm transition-shadow"
+                  >
+                    <div className="flex items-start gap-2">
+                      <span
+                        className="mt-1 w-3 h-3 rounded-full flex-shrink-0"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-gray-800 truncate">{item.title}</p>
+                        <div className="flex items-center gap-1 text-xs text-gray-500 mt-0.5">
+                          <Clock className="w-3 h-3" />
+                          <span>{item.timeLabel}</span>
+                          <span className="ml-1 inline-flex items-center gap-0.5 text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">
+                            {item.kind === 'project' ? (
+                              <>
+                                <FolderOpen className="w-2.5 h-2.5" />
+                                プロジェクト
+                              </>
+                            ) : (
+                              <>
+                                <CalendarDays className="w-2.5 h-2.5" />
+                                予定
+                              </>
+                            )}
+                          </span>
+                        </div>
+                        {assigneeNames.length > 0 && (
+                          <div className="flex items-center gap-1 text-xs text-gray-500 mt-1">
+                            <Users className="w-3 h-3 flex-shrink-0" />
+                            <span className="truncate">{assigneeNames.join('、')}</span>
+                          </div>
+                        )}
                       </div>
                     </div>
-                  </div>
-                </button>
-              ))
+                  </button>
+                );
+              })
             )}
           </div>
 
@@ -321,6 +350,7 @@ const CalendarView: React.FC<CalendarViewProps> = ({
         <EventForm
           event={editingEvent}
           defaultDate={selectedDate}
+          members={members}
           onSave={handleSaveEvent}
           onDelete={handleDeleteEvent}
           onClose={() => {

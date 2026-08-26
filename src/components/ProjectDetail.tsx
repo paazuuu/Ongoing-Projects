@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Project, Member, ConflictAlert, ExternalPartner, Label, ProjectPriority } from '../types';
+import { Project, Member, ConflictAlert, ExternalPartner, Label, ProjectPriority, CalendarEvent } from '../types';
 import MemberDetailModal from './MemberDetailModal';
 import MemberAvatar from './MemberAvatar';
 import LabelPicker from './LabelPicker';
@@ -31,6 +31,7 @@ interface ProjectDetailProps {
   externalPartners: ExternalPartner[];
   projects: Project[];
   labels: Label[];
+  calendarEvents: CalendarEvent[];
   isDatabaseConnected: boolean;
   onMemberAssignment: (projectId: string, memberIds: string[]) => void;
   onLeaderAssignment: (projectId: string, leaderId: string | undefined) => void;
@@ -47,6 +48,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   externalPartners,
   projects,
   labels,
+  calendarEvents,
   isDatabaseConnected,
   onMemberAssignment,
   onLeaderAssignment,
@@ -72,7 +74,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
 
   // この日程での各作業員の空き状況（他案件と日程が重なるかで判定）
   const availabilityByMember = new Map(
-    members.map((m) => [m.id, getMemberAvailability(m, project, projects)])
+    members.map((m) => [m.id, getMemberAvailability(m, project, projects, calendarEvents)])
   );
   const isMemberAvailable = (memberId: string) =>
     availabilityByMember.get(memberId)?.available ?? true;

@@ -1,14 +1,15 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { Project, Member } from '../types';
+import { Project, Member, CalendarEvent } from '../types';
 import { isMemberAssigned } from '../utils/projectFilter';
 import { checkScheduleConflicts } from '../utils/conflictChecker';
 import { workflowStatusLabel, workflowStatusColor, priorityLabel, priorityColor } from '../utils/workflowStatus';
-import { WEEKDAY_LABELS, todayKey } from '../utils/calendar';
-import { CalendarClock, Clock, MapPin, Crown, AlertTriangle, User } from 'lucide-react';
+import { WEEKDAY_LABELS, todayKey, formatEventTimeLabel } from '../utils/calendar';
+import { CalendarClock, Clock, MapPin, Crown, AlertTriangle, User, CalendarDays } from 'lucide-react';
 
 interface MyScheduleViewProps {
   projects: Project[];
   members: Member[];
+  calendarEvents: CalendarEvent[];
   onProjectSelect: (project: Project) => void;
 }
 
@@ -27,7 +28,12 @@ const relativeDateLabel = (dateStr: string): string => {
   return `${base}・${Math.abs(diff)}日前`;
 };
 
-const MyScheduleView: React.FC<MyScheduleViewProps> = ({ projects, members, onProjectSelect }) => {
+const MyScheduleView: React.FC<MyScheduleViewProps> = ({
+  projects,
+  members,
+  calendarEvents,
+  onProjectSelect,
+}) => {
   const today = todayKey();
   const [memberId, setMemberId] = useState('');
   const [showPast, setShowPast] = useState(false);
@@ -70,23 +76,38 @@ const MyScheduleView: React.FC<MyScheduleViewProps> = ({ projects, members, onPr
   const todayCount = myProjects.filter((p) => p.date === today).length;
   const upcomingCount = myProjects.filter((p) => p.date >= today).length;
 
-  const visibleProjects = showPast ? myProjects : myProjects.filter((p) => p.date >= today);
+  const myEvents = useMemo(
+    () => (memberId ? calendarEvents.filter((e) => e.memberIds.includes(memberId)) : []),
+    [calendarEvents, memberId]
+  );
 
-  // 日付ごとにグループ化して昇順ソート
+  const visibleProjects = showPast ? myProjects : myProjects.filter((p) => p.date >= today);
+  const visibleEvents = showPast ? myEvents : myEvents.filter((e) => e.date >= today);
+
+  // 日付ごとにプロジェクトと予定をまとめて昇順ソート
   const grouped = useMemo(() => {
-    const map = new Map<string, Project[]>();
-    for (const p of visibleProjects) {
-      const arr = map.get(p.date);
-      if (arr) arr.push(p);
-      else map.set(p.date, [p]);
-    }
+    const map = new Map<string, { projects: Project[]; events: CalendarEvent[] }>();
+    const ensure = (date: string) => {
+      let g = map.get(date);
+      if (!g) {
+        g = { projects: [], events: [] };
+        map.set(date, g);
+      }
+      return g;
+    };
+    for (const p of visibleProjects) ensure(p.date).projects.push(p);
+    for (const e of visibleEvents) ensure(e.date).events.push(e);
+
     return Array.from(map.entries())
       .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([date, list]) => ({
+      .map(([date, g]) => ({
         date,
-        list: list.sort((a, b) => a.workTime.start.localeCompare(b.workTime.start)),
+        projects: g.projects.sort((a, b) => a.workTime.start.localeCompare(b.workTime.start)),
+        events: g.events.sort((a, b) =>
+          (a.startTime ?? '00:00').localeCompare(b.startTime ?? '00:00')
+        ),
       }));
-  }, [visibleProjects]);
+  }, [visibleProjects, visibleEvents]);
 
   const selectedMember = members.find((m) => m.id === memberId);
 
@@ -187,7 +208,7 @@ const MyScheduleView: React.FC<MyScheduleViewProps> = ({ projects, members, onPr
           </div>
         ) : (
           <div className="space-y-6">
-            {grouped.map(({ date, list }) => (
+            {grouped.map(({ date, projects: dayProjects, events: dayEvents }) => (
               <div key={date}>
                 <div className="flex items-center gap-2 mb-2">
                   <span
@@ -200,7 +221,28 @@ const MyScheduleView: React.FC<MyScheduleViewProps> = ({ projects, members, onPr
                   <div className="flex-1 h-px bg-gray-200" />
                 </div>
                 <div className="space-y-2">
-                  {list.map((project) => {
+                  {/* 本人の予定（有給・不在など） */}
+                  {dayEvents.map((event) => (
+                    <div
+                      key={event.id}
+                      className="w-full text-left bg-white rounded-lg border-l-4 border border-gray-200 p-3"
+                      style={{ borderLeftColor: event.color }}
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <CalendarDays className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <span className="font-medium text-gray-800 truncate">{event.title}</span>
+                        </div>
+                        <span className="text-xs text-gray-500 flex-shrink-0">
+                          {formatEventTimeLabel(event)}
+                        </span>
+                      </div>
+                      {event.memo && (
+                        <p className="text-xs text-gray-500 mt-1 ml-6 truncate">{event.memo}</p>
+                      )}
+                    </div>
+                  ))}
+                  {dayProjects.map((project) => {
                     const isLead = project.leadMemberId === memberId;
                     return (
                       <button

@@ -59,6 +59,7 @@ export interface CalendarEvent {
   endTime?: string; // HH:mm
   color: string; // 表示色（TIMETREEのカラーラベル相当）
   memo: string;
+  memberIds: string[]; // ひも付く作業員（空=全体/共有の予定）
   createdAt: string;
   updatedAt: string;
 }
@@ -85,6 +86,7 @@ export interface EventFormData {
   endTime: string;
   color: string;
   memo: string;
+  memberIds: string[];
 }
 
 export interface ChecklistItem {
