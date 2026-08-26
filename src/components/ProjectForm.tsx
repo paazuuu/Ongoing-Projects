@@ -18,6 +18,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
     date: defaultDate ?? '',
+    endDate: '',
     workTimeStart: '09:00',
     workTimeEnd: '17:00',
     location: '',
@@ -37,6 +38,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
       setFormData({
         name: project.name,
         date: project.date,
+        endDate: project.endDate ?? '',
         workTimeStart: project.workTime.start,
         workTimeEnd: project.workTime.end,
         location: project.location,
@@ -53,9 +55,13 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    const normalizedEndDate =
+      formData.endDate && formData.endDate > formData.date ? formData.endDate : undefined;
+
     const projectData = {
       name: formData.name,
       date: formData.date,
+      endDate: normalizedEndDate,
       workTime: {
         start: formData.workTimeStart,
         end: formData.workTimeEnd,
@@ -137,7 +143,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                実施日 *
+                開始日 *
               </label>
               <input
                 type="date"
@@ -147,6 +153,22 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                終了日（任意）
+              </label>
+              <input
+                type="date"
+                value={formData.endDate}
+                min={formData.date || undefined}
+                onChange={(e) => handleChange('endDate', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="text-xs text-gray-400 mt-1">複数日にまたがる場合に指定（空欄で単日）</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 必要人数 *

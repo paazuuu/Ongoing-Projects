@@ -134,6 +134,7 @@ export const mockProjects: Project[] = [
     id: 'project-2',
     name: '△△道路 改良工事',
     date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 明日
+    endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5日後まで（複数日）
     workTime: { start: '08:00', end: '16:00' },
     location: '神奈川県横浜市',
     workContent: '路盤整正・アスファルト舗装',
