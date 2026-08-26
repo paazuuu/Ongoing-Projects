@@ -112,7 +112,7 @@ const MemberForm: React.FC<MemberFormProps> = ({ member, onSave, onCancel }) => 
               value={formData.team}
               onChange={(e) => handleChange('team', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-              placeholder="例: 東京保守チーム"
+              placeholder="例: 東京工事1課 / 土木チーム"
             />
           </div>
         </div>
@@ -156,7 +156,7 @@ const MemberForm: React.FC<MemberFormProps> = ({ member, onSave, onCancel }) => 
                 onChange={(e) => setNewQualification(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addQualification())}
                 className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:border-green-500"
-                placeholder="例: 電気主任技術者"
+                placeholder="例: 土木施工管理技士 / 電気工事士 / 玉掛け"
               />
               <button
                 type="button"

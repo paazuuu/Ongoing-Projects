@@ -11,12 +11,13 @@ interface ProjectFormProps {
   onCreateLabel: (name: string, color: string) => void;
   onSave: (data: ProjectSaveData) => void;
   onCancel: () => void;
+  defaultDate?: string; // カレンダーから新規作成する際の初期日付
 }
 
-const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, labels, onCreateLabel, onSave, onCancel }) => {
+const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, labels, onCreateLabel, onSave, onCancel, defaultDate }) => {
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
-    date: '',
+    date: defaultDate ?? '',
     workTimeStart: '09:00',
     workTimeEnd: '17:00',
     location: '',
@@ -129,7 +130,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
               value={formData.name}
               onChange={(e) => handleChange('name', e.target.value)}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="例: A社電気点検"
+              placeholder="例: ○○ビル新築工事 / A社定期点検"
             />
           </div>
 
@@ -239,7 +240,7 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
               onChange={(e) => handleChange('workContent', e.target.value)}
               rows={3}
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-              placeholder="例: 受電設備点検・絶縁抵抗測定"
+              placeholder="例: 基礎コンクリート打設 / 内装解体・撤去 / 設備点検"
             />
           </div>
 

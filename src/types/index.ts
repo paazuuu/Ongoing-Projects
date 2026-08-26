@@ -48,6 +48,44 @@ export interface Label {
   createdAt: string;
 }
 
+// TIMETREE風カレンダーの軽量な予定（プロジェクトとは別枠のスケジュール）
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  date: string; // YYYY-MM-DD
+  isAllDay: boolean;
+  startTime?: string; // HH:mm（終日でない場合）
+  endTime?: string; // HH:mm
+  color: string; // 表示色（TIMETREEのカラーラベル相当）
+  memo: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// カレンダー上で扱う共通イベント（プロジェクト由来 / 予定由来）
+export type CalendarItemKind = 'project' | 'event';
+
+export interface CalendarItem {
+  kind: CalendarItemKind;
+  id: string;
+  date: string;
+  title: string;
+  color: string;
+  timeLabel: string; // 例: "09:00-17:00" または "終日"
+  sortKey: string; // 並び替え用（開始時刻など）
+}
+
+// 予定フォームの入力値
+export interface EventFormData {
+  title: string;
+  date: string;
+  isAllDay: boolean;
+  startTime: string;
+  endTime: string;
+  color: string;
+  memo: string;
+}
+
 export interface ChecklistItem {
   id: string;
   projectId: string;

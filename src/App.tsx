@@ -8,6 +8,7 @@ function App() {
     projects,
     externalPartners,
     labels,
+    calendarEvents,
     isLoading,
     isDatabaseConnected,
     updateMembers,
@@ -16,6 +17,9 @@ function App() {
     createLabel,
     updateLabel,
     deleteLabel,
+    createCalendarEvent,
+    updateCalendarEvent,
+    deleteCalendarEvent,
   } = useDatabaseData();
 
   if (isLoading) {
@@ -36,12 +40,16 @@ function App() {
         members={members}
         externalPartners={externalPartners}
         labels={labels}
+        calendarEvents={calendarEvents}
         onUpdateProjects={updateProjects}
         onUpdateMembers={updateMembers}
         onUpdateExternalPartners={updateExternalPartners}
         onCreateLabel={createLabel}
         onUpdateLabel={updateLabel}
         onDeleteLabel={deleteLabel}
+        onCreateCalendarEvent={createCalendarEvent}
+        onUpdateCalendarEvent={updateCalendarEvent}
+        onDeleteCalendarEvent={deleteCalendarEvent}
         isDatabaseConnected={isDatabaseConnected}
       />
     </div>
