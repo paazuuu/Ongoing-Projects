@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import { Project, Member, Label, ConflictAlert, ProjectWorkflowStatus } from '../types';
 import MemberAvatar from './MemberAvatar';
+import ProjectFilterBar from './ProjectFilterBar';
 import { AlertTriangle, Calendar } from 'lucide-react';
 import { WORKFLOW_STATUSES, workflowStatusLabel, priorityColor, priorityLabel } from '../utils/workflowStatus';
+import { ProjectFilterState, emptyProjectFilter, applyProjectFilter } from '../utils/projectFilter';
 
 interface KanbanBoardProps {
   projects: Project[];
@@ -22,7 +24,11 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   onProjectSelect,
   onProjectStatusChange,
 }) => {
-  const activeProjects = projects.filter((p) => p.isActive);
+  const [filter, setFilter] = useState<ProjectFilterState>(emptyProjectFilter);
+  const activeProjects = applyProjectFilter(
+    projects.filter((p) => p.isActive),
+    filter
+  );
 
   const handleDragEnd = (result: DropResult) => {
     if (!result.destination) return;
@@ -32,10 +38,17 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
   };
 
   return (
-    <div className="p-6 h-full overflow-x-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">ステータスボード</h1>
+    <div className="p-6 h-full overflow-x-auto flex flex-col">
+      <h1 className="text-2xl font-bold text-gray-900 mb-4">ステータスボード</h1>
+      <ProjectFilterBar
+        members={members.filter((m) => m.isActive)}
+        labels={labels}
+        filter={filter}
+        onChange={setFilter}
+        resultCount={activeProjects.length}
+      />
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 h-full min-w-max">
+        <div className="flex gap-4 flex-1 min-h-0 min-w-max">
           {WORKFLOW_STATUSES.map((status) => {
             const columnProjects = activeProjects.filter((p) => p.workflowStatus === status);
             return (

@@ -10,8 +10,9 @@ import ExternalPartnerManagement from './ExternalPartnerManagement';
 import ConflictAlerts from './ConflictAlerts';
 import KanbanBoard from './KanbanBoard';
 import CalendarView from './CalendarView';
+import MyScheduleView from './MyScheduleView';
 import DebugPanel from './DebugPanel';
-import { Plus, Users, FolderOpen, Home, Building2, Trello, CalendarDays } from 'lucide-react';
+import { Plus, Users, FolderOpen, Home, Building2, Trello, CalendarDays, CalendarClock } from 'lucide-react';
 import { checkScheduleConflicts } from '../utils/conflictChecker';
 
 interface ProjectManagementProps {
@@ -57,6 +58,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
   const [showDashboard, setShowDashboard] = useState(true);
   const [showKanbanBoard, setShowKanbanBoard] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
+  const [showMySchedule, setShowMySchedule] = useState(false);
   const [formDefaultDate, setFormDefaultDate] = useState<string | undefined>(undefined);
   const [conflicts, setConflicts] = useState<ConflictAlert[]>([]);
 
@@ -71,6 +73,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowDashboard(false);
     setShowKanbanBoard(false);
     setShowCalendar(false);
+    setShowMySchedule(false);
   };
 
   const handleCreateProject = () => {
@@ -83,6 +86,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowDashboard(false);
     setShowKanbanBoard(false);
     setShowCalendar(false);
+    setShowMySchedule(false);
   };
 
   const handleShowMemberManagement = () => {
@@ -94,6 +98,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowDashboard(false);
     setShowKanbanBoard(false);
     setShowCalendar(false);
+    setShowMySchedule(false);
   };
 
   const handleShowPartnerManagement = () => {
@@ -105,6 +110,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowDashboard(false);
     setShowKanbanBoard(false);
     setShowCalendar(false);
+    setShowMySchedule(false);
   };
 
   const handleShowDashboard = () => {
@@ -116,6 +122,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowDashboard(true);
     setShowKanbanBoard(false);
     setShowCalendar(false);
+    setShowMySchedule(false);
   };
 
   const handleShowKanbanBoard = () => {
@@ -127,6 +134,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowDashboard(false);
     setShowKanbanBoard(true);
     setShowCalendar(false);
+    setShowMySchedule(false);
   };
 
   const handleShowCalendar = () => {
@@ -138,6 +146,19 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowDashboard(false);
     setShowKanbanBoard(false);
     setShowCalendar(true);
+    setShowMySchedule(false);
+  };
+
+  const handleShowMySchedule = () => {
+    setSelectedProject(null);
+    setSelectedMember(null);
+    setShowProjectForm(false);
+    setShowMemberManagement(false);
+    setShowPartnerManagement(false);
+    setShowDashboard(false);
+    setShowKanbanBoard(false);
+    setShowCalendar(false);
+    setShowMySchedule(true);
   };
 
   const handleCreateProjectForDate = (date: string) => {
@@ -150,6 +171,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowDashboard(false);
     setShowKanbanBoard(false);
     setShowCalendar(false);
+    setShowMySchedule(false);
   };
 
   const handleProjectStatusChange = (projectId: string, workflowStatus: ProjectWorkflowStatus) => {
@@ -238,6 +260,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowDashboard(false);
     setShowKanbanBoard(false);
     setShowCalendar(false);
+    setShowMySchedule(false);
   };
 
   const handleEditSelectedMember = () => {
@@ -271,7 +294,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
       {/* サイドバー */}
       <div className="w-80 bg-white shadow-lg border-r border-gray-200 flex flex-col">
         <div className="p-6 border-b bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-          <h1 className="text-2xl font-bold mb-4">プロジェクト管理</h1>
+          <h1 className="text-xl font-bold mb-1">工事・請負プロジェクト管理</h1>
+          <p className="text-xs text-blue-100 mb-4">案件づくり・人員割り振り・進捗の見える化</p>
           <div className="space-y-2">
             <button
               onClick={handleShowDashboard}
@@ -317,6 +341,17 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
               ステータスボード
             </button>
             <button
+              onClick={handleShowMySchedule}
+              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showMySchedule
+                  ? 'bg-white bg-opacity-30 text-white'
+                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+              }`}
+            >
+              <CalendarClock className="w-4 h-4" />
+              マイスケジュール
+            </button>
+            <button
               onClick={handleShowCalendar}
               className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
                 showCalendar
@@ -359,9 +394,16 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
 
       {/* メインコンテンツ */}
       <div className="flex-1 flex flex-col">
-        {showCalendar ? (
+        {showMySchedule ? (
+          <MyScheduleView
+            projects={activeProjects}
+            members={activeMembers}
+            onProjectSelect={handleProjectSelect}
+          />
+        ) : showCalendar ? (
           <CalendarView
             projects={activeProjects}
+            members={activeMembers}
             calendarEvents={calendarEvents}
             onProjectSelect={handleProjectSelect}
             onCreateProjectForDate={handleCreateProjectForDate}

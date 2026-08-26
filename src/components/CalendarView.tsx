@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Project, CalendarEvent, CalendarItem, EventFormData } from '../types';
+import { Project, Member, CalendarEvent, CalendarItem, EventFormData } from '../types';
 import {
   WEEKDAY_LABELS,
   buildMonthMatrix,
@@ -8,11 +8,13 @@ import {
   todayKey,
   monthTitle,
 } from '../utils/calendar';
+import { isMemberAssigned } from '../utils/projectFilter';
 import EventForm from './EventForm';
 import { ChevronLeft, ChevronRight, Plus, CalendarDays, FolderOpen, Clock } from 'lucide-react';
 
 interface CalendarViewProps {
   projects: Project[];
+  members: Member[];
   calendarEvents: CalendarEvent[];
   onProjectSelect: (project: Project) => void;
   onCreateProjectForDate: (date: string) => void;
@@ -25,6 +27,7 @@ const MAX_ITEMS_IN_CELL = 3;
 
 const CalendarView: React.FC<CalendarViewProps> = ({
   projects,
+  members,
   calendarEvents,
   onProjectSelect,
   onCreateProjectForDate,
@@ -37,14 +40,19 @@ const CalendarView: React.FC<CalendarViewProps> = ({
   const [viewYear, setViewYear] = useState(now.getFullYear());
   const [viewMonth, setViewMonth] = useState(now.getMonth()); // 0-index
   const [selectedDate, setSelectedDate] = useState(today);
+  const [filterMemberId, setFilterMemberId] = useState('');
 
   const [showEventForm, setShowEventForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
 
   const days = useMemo(() => buildMonthMatrix(viewYear, viewMonth), [viewYear, viewMonth]);
+  const visibleProjects = useMemo(
+    () => (filterMemberId ? projects.filter((p) => isMemberAssigned(p, filterMemberId)) : projects),
+    [projects, filterMemberId]
+  );
   const itemsByDate = useMemo(
-    () => buildItemsByDate(projects, calendarEvents),
-    [projects, calendarEvents]
+    () => buildItemsByDate(visibleProjects, calendarEvents),
+    [visibleProjects, calendarEvents]
   );
 
   const selectedItems: CalendarItem[] = itemsByDate.get(selectedDate) ?? [];
@@ -138,13 +146,28 @@ const CalendarView: React.FC<CalendarViewProps> = ({
             今日
           </button>
         </div>
-        <button
-          onClick={openNewEvent}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-        >
-          <Plus className="w-4 h-4" />
-          予定を追加
-        </button>
+        <div className="flex items-center gap-2">
+          <select
+            value={filterMemberId}
+            onChange={(e) => setFilterMemberId(e.target.value)}
+            className="text-sm border border-gray-300 rounded-lg px-2 py-2 bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            aria-label="担当者で絞り込み"
+          >
+            <option value="">担当者：全員</option>
+            {members.map((m) => (
+              <option key={m.id} value={m.id}>
+                {m.name}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={openNewEvent}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+          >
+            <Plus className="w-4 h-4" />
+            予定を追加
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 flex min-h-0">

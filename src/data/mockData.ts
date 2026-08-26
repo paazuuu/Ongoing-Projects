@@ -7,11 +7,11 @@ export const mockMembers: Member[] = [
   {
     id: 'member-1',
     name: '山田 太郎',
-    team: '東京保守チーム',
-    qualifications: ['電気主任技術者', '第一種電気工事士'],
+    team: '東京工事1課',
+    qualifications: ['1級土木施工管理技士', '玉掛け'],
     availableHours: { start: '08:00', end: '18:00' },
     availableAreas: ['東京都', '神奈川県'],
-    notes: '経験豊富なリーダー',
+    notes: '経験豊富な現場代理人',
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
@@ -19,8 +19,8 @@ export const mockMembers: Member[] = [
   {
     id: 'member-2',
     name: '佐藤 花子',
-    team: '東京保守チーム',
-    qualifications: ['第二種電気工事士'],
+    team: '東京工事1課',
+    qualifications: ['2級建築施工管理技士'],
     availableHours: { start: '09:00', end: '17:00' },
     availableAreas: ['東京都'],
     notes: '要宿泊不可',
@@ -31,8 +31,8 @@ export const mockMembers: Member[] = [
   {
     id: 'member-3',
     name: '田中 次郎',
-    team: '関西保守チーム',
-    qualifications: ['電気主任技術者', '施工管理技士'],
+    team: '関西工事課',
+    qualifications: ['1級建築施工管理技士', '車両系建設機械'],
     availableHours: { start: '08:00', end: '19:00' },
     availableAreas: ['大阪府', '京都府', '兵庫県'],
     notes: '',
@@ -43,8 +43,8 @@ export const mockMembers: Member[] = [
   {
     id: 'member-4',
     name: '鈴木 三郎',
-    team: '東京保守チーム',
-    qualifications: ['第一種電気工事士'],
+    team: '東京土木チーム',
+    qualifications: ['第一種電気工事士', '高所作業車'],
     availableHours: { start: '07:00', end: '16:00' },
     availableAreas: ['東京都', '千葉県', '埼玉県'],
     notes: '早朝対応可能',
@@ -55,11 +55,11 @@ export const mockMembers: Member[] = [
   {
     id: 'member-5',
     name: '高橋 美咲',
-    team: '関西保守チーム',
-    qualifications: ['第二種電気工事士', '消防設備士'],
+    team: '関西工事課',
+    qualifications: ['2級土木施工管理技士', '足場の組立て等作業主任者'],
     availableHours: { start: '09:00', end: '18:00' },
     availableAreas: ['大阪府', '奈良県'],
-    notes: '消防設備も対応可',
+    notes: '足場・仮設まわりに強い',
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
@@ -69,7 +69,7 @@ export const mockMembers: Member[] = [
 export const mockExternalPartners: ExternalPartner[] = [
   {
     id: 'partner-1',
-    name: '田中電設',
+    name: '田中建設',
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
@@ -83,14 +83,14 @@ export const mockExternalPartners: ExternalPartner[] = [
   },
   {
     id: 'partner-3',
-    name: '佐藤電気工事',
+    name: '佐藤土木',
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
   },
   {
     id: 'partner-4',
-    name: '関西電設株式会社',
+    name: '関西建設株式会社',
     isActive: true,
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
@@ -99,20 +99,21 @@ export const mockExternalPartners: ExternalPartner[] = [
 
 export const mockLabels: Label[] = [
   { id: 'label-1', name: '緊急', color: '#ef4444', createdAt: '2025-01-01T00:00:00Z' },
-  { id: 'label-2', name: '定期点検', color: '#3b82f6', createdAt: '2025-01-01T00:00:00Z' },
-  { id: 'label-3', name: '要見積', color: '#f59e0b', createdAt: '2025-01-01T00:00:00Z' }
+  { id: 'label-2', name: '工事', color: '#3b82f6', createdAt: '2025-01-01T00:00:00Z' },
+  { id: 'label-3', name: '請負', color: '#f59e0b', createdAt: '2025-01-01T00:00:00Z' },
+  { id: 'label-4', name: '定期点検', color: '#14b8a6', createdAt: '2025-01-01T00:00:00Z' }
 ];
 
 export const mockProjects: Project[] = [
   {
     id: 'project-1',
-    name: 'A社電気点検',
+    name: '○○ビル 内装改修工事',
     date: new Date().toISOString().split('T')[0], // 今日
     workTime: { start: '09:00', end: '17:00' },
     location: '東京都中央区',
-    workContent: '受電設備点検・絶縁抵抗測定',
+    workContent: '3F内装解体・軽鉄下地組み',
     requiredMembers: 2,
-    notes: '安全靴必須、屋内作業',
+    notes: '安全靴・ヘルメット必須、館内養生',
     assignedMembers: ['member-1', 'member-2'],
     leadMemberId: 'member-1',
     externalPartners: [
@@ -131,13 +132,13 @@ export const mockProjects: Project[] = [
   },
   {
     id: 'project-2',
-    name: 'B工場定期点検',
+    name: '△△道路 改良工事',
     date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 明日
     workTime: { start: '08:00', end: '16:00' },
     location: '神奈川県横浜市',
-    workContent: '工場内電気設備全般点検',
+    workContent: '路盤整正・アスファルト舗装',
     requiredMembers: 3,
-    notes: '作業服貸与あり、要安全教育',
+    notes: '片側交互通行、交通誘導員手配済み',
     assignedMembers: ['member-3'],
     leadMemberId: 'member-3',
     externalPartners: [],
@@ -150,17 +151,17 @@ export const mockProjects: Project[] = [
   },
   {
     id: 'project-3',
-    name: 'Cビル非常用発電機点検',
+    name: '□□マンション 設備点検（請負）',
     date: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 2日後
     workTime: { start: '10:00', end: '15:00' },
     location: '東京都新宿区',
-    workContent: '非常用発電機運転試験・点検',
+    workContent: '共用部設備の定期点検・報告書作成',
     requiredMembers: 1,
-    notes: '騒音注意、テナント営業中',
+    notes: '居住者対応注意、日中作業',
     assignedMembers: [],
     leadMemberId: undefined,
     externalPartners: [],
-    labelIds: [],
+    labelIds: ['label-3', 'label-4'],
     workflowStatus: 'todo',
     priority: 'low',
     isActive: true,
@@ -169,13 +170,13 @@ export const mockProjects: Project[] = [
   },
   {
     id: 'project-4',
-    name: 'D病院緊急対応',
+    name: 'D施設 緊急漏水対応',
     date: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 昨日
     workTime: { start: '14:00', end: '18:00' },
     location: '東京都世田谷区',
-    workContent: '医療機器用電源設備修理',
+    workContent: '給排水管漏水の応急補修',
     requiredMembers: 2,
-    notes: '緊急案件、病院内感染対策必須',
+    notes: '緊急案件、施設稼働中',
     assignedMembers: ['member-1', 'member-4'],
     leadMemberId: 'member-1',
     externalPartners: [
@@ -194,11 +195,11 @@ export const mockProjects: Project[] = [
   },
   {
     id: 'project-5',
-    name: 'E商業施設年次点検',
+    name: 'E商業施設 外構工事',
     date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 1週間後
     workTime: { start: '06:00', end: '12:00' },
     location: '千葉県船橋市',
-    workContent: '商業施設電気設備年次点検',
+    workContent: '駐車場舗装・区画線引き',
     requiredMembers: 3,
     notes: '開店前作業、早朝対応',
     assignedMembers: [],
