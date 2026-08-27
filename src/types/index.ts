@@ -35,8 +35,10 @@ export interface Project {
   requiredMembers: number;
   notes: string;
   assignedMembers: string[];
+  memberTimes?: { [memberId: string]: { start: string; end: string } }; // 作業員ごとの始/終（未設定は案件全体の作業時間）
   leadMemberId?: string; // リーダー（担当）メンバーID
   contactMemberId?: string; // 連絡係メンバーID（臨時で変わることがある）
+  assignedVehicleIds?: string[]; // 社有車両の割当
   externalPartners: ExternalPartnerAssignment[]; // 協力業者配置情報
   labelIds: string[];
   workflowStatus: ProjectWorkflowStatus;
@@ -117,6 +119,26 @@ export interface Comment {
 export interface ExternalPartner {
   id: string;
   name: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// 社有車両（作業計画表の車両手配欄：営業車・連絡車・Wキャブ・レンタカー・機動 等）
+export type VehicleCategory =
+  | 'sales' // 営業車
+  | 'liaison' // 連絡車
+  | 'wcab' // Wキャブ
+  | 'rental' // レンタカー
+  | 'mobile' // 機動
+  | 'other'; // その他
+
+export interface Vehicle {
+  id: string;
+  name: string; // 車両名・呼称
+  category: VehicleCategory;
+  plateNumber?: string; // 車番・ナンバー
+  notes?: string;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

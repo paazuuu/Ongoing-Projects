@@ -9,11 +9,13 @@ function App() {
     externalPartners,
     labels,
     calendarEvents,
+    vehicles,
     isLoading,
     isDatabaseConnected,
     updateMembers,
     updateProjects,
     updateExternalPartners,
+    updateVehicles,
     createLabel,
     updateLabel,
     deleteLabel,
@@ -41,9 +43,11 @@ function App() {
         externalPartners={externalPartners}
         labels={labels}
         calendarEvents={calendarEvents}
+        vehicles={vehicles}
         onUpdateProjects={updateProjects}
         onUpdateMembers={updateMembers}
         onUpdateExternalPartners={updateExternalPartners}
+        onUpdateVehicles={updateVehicles}
         onCreateLabel={createLabel}
         onUpdateLabel={updateLabel}
         onDeleteLabel={deleteLabel}
