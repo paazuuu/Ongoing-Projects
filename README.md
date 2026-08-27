@@ -155,22 +155,41 @@ expo export:web
 
 ## API エンドポイント
 
+バックエンドは `worker/`（Cloudflare Workers + Hono + D1 + drizzle）。フロントは
+`VITE_API_BASE_URL` 経由で以下を呼び、DB未接続時はモックデータ＋localStorageで動作します。
+
 - `GET /api/health` - データベース接続確認
-- `GET /api/members` - メンバー一覧取得
-- `PUT /api/members` - メンバー更新
-- `GET /api/projects` - プロジェクト一覧取得
-- `PUT /api/projects` - プロジェクト更新
-- `GET /api/external-partners` - 協力業者一覧取得
-- `PUT /api/external-partners` - 協力業者更新
+- `GET /api/members` / `PUT /api/members` - メンバー取得・更新
+- `GET /api/projects` / `PUT /api/projects` - プロジェクト取得・更新（JOB No./顧客名/営業担当/発注形態/終了日/連絡係/作業員別始終/割当車両/下請・傭車の詳細まで永続化）
+- `GET /api/external-partners` / `PUT /api/external-partners` - 協力業者取得・更新
+- `GET /api/labels` / `POST` / `PUT /:id` / `DELETE /:id` - ラベル
+- `GET /api/vehicles` / `PUT /api/vehicles` / `DELETE /:id` - 社有車両マスタ
+- `GET /api/calendar-events` / `POST` / `PUT /:id` / `DELETE /:id` - カレンダー予定（作業員ひも付け・勤怠種別を含む）
 
 ## データベーススキーマ
 
-主要テーブル:
+主要テーブル（`worker/src/db/schema.ts`。bootstrap用SQLは `worker/schema.sql`）:
 - `members` - メンバー情報
-- `projects` - プロジェクト情報
+- `projects` - プロジェクト情報（JOB No./顧客名/営業担当/発注形態/終了日/連絡係ほか）
 - `external_partners` - 協力業者情報
-- `project_member_assignments` - メンバー配置
-- `project_external_partner_assignments` - 協力業者配置
+- `vehicles` - 社有車両マスタ
+- `calendar_events` / `calendar_event_members` - カレンダー予定と作業員ひも付け
+- `project_member_assignments` - メンバー配置（作業員別の始/終を含む）
+- `project_vehicle_assignments` - 車両割当
+- `project_external_partner_assignments` - 協力業者配置（下請/傭車の区分・時刻・車番・車種）
+
+### D1 の初期化（バックエンド連携）
+
+```bash
+cd worker
+npm install
+npx wrangler d1 create ongoing-projects-db   # 出力の database_id を wrangler.toml に貼る
+npx wrangler d1 execute DB --file=./schema.sql --remote   # スキーマ適用（--local でローカルにも）
+npm run deploy                                 # Worker をデプロイ
+```
+
+デプロイした Worker の URL をフロントの `.env`（`VITE_API_BASE_URL`）に設定すると、
+`/api/health` が通り自動的にDBモードへ切り替わります。
 
 ## 開発コマンド
 
