@@ -51,7 +51,7 @@
 | 作業員ごとの始/終 | Project.memberTimes（配置メンバー個別の始/終、既定=案件時間） | ✓ |
 | 社有車両（営業車/連絡車/Wキャブ/レンタカー/機動） | Vehicle マスタ＋車両管理画面、Project.assignedVehicleIds で割当 | ✓ |
 | 月間 作業員×日 の俯瞰マトリクス | 操配表ビュー（MatrixView）：行=作業員/列=日、案件・勤怠を色表示 | ✓ |
-| 作業/役割の略号（副セル） | — | ✗ |
+| 作業/役割の略号（副セル） | Project.memberRoleCodes（案件×作業員ごとの自由入力）。ProjectDetailで入力、操配表ビューではセル隅の副セルとして表示 | ✓ |
 
 ## 4. 残りロードマップ
 
@@ -61,10 +61,14 @@
 - Phase 4: 下請・傭車の精緻化 — **実装済**
 - Phase 5: 操配マトリクス（作業員×日の月間俯瞰ビュー） — **実装済**（MatrixView）
 - Phase 6: DB/バックエンド連携 — **実装済**（`worker/` に全欄・車両・カレンダー予定のAPI/スキーマ）
-- 残: 作業/役割の略号（副セル）の表現
+- Phase 7: 作業/役割の略号（副セル） — **実装済**（Project.memberRoleCodes、操配表の副セル表示）
+- 残: なし（既存Excelの全項目を反映済み。以後は運用フィードバックで改善）
 
 ## 実装メモ
 - 勤怠種別: `src/utils/eventTypes.ts` の `EVENT_TYPES`。`blocks:true` の種別は
   `getMemberAvailability`（`src/utils/availability.ts`）でその日を割当不可にする。
 - 下請/傭車: `ExternalPartnerAssignment`（`src/types/index.ts`）に kind / start・endTime /
   vehicleNumber / vehicleType を追加。入力は `ProjectForm`、表示は `ProjectDetail`。
+- 略号（副セル）: `Project.memberRoleCodes`（案件×作業員の自由入力）。候補は
+  `src/utils/roleCodes.ts`、入力は `ProjectDetail`、表示は `MatrixView`（セル隅バッジ）。
+  バックエンドは `project_member_assignments.role_code` 列に保存。

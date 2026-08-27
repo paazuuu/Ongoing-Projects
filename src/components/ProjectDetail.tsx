@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
 import { Project, Member, ConflictAlert, ExternalPartner, Label, ProjectPriority, CalendarEvent, Vehicle } from '../types';
 import { vehicleCategoryLabel, vehicleCategoryColor } from '../utils/vehicles';
+import { ROLE_CODE_PRESETS } from '../utils/roleCodes';
 import MemberDetailModal from './MemberDetailModal';
 import MemberAvatar from './MemberAvatar';
 import LabelPicker from './LabelPicker';
@@ -191,6 +192,21 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     const memberTimes = { ...(project.memberTimes ?? {}), [memberId]: nextTime };
     const updatedProjects = projects.map(p =>
       p.id === project.id ? { ...p, memberTimes, updatedAt: new Date().toISOString() } : p
+    );
+    setHasUnsavedChanges(true);
+    onUpdateProjects(updatedProjects);
+  };
+
+  // 作業員ごとの作業/役割の略号（操配表の副セル）
+  const getMemberRoleCode = (memberId: string) => project.memberRoleCodes?.[memberId] ?? '';
+
+  const handleMemberRoleChange = (memberId: string, value: string) => {
+    const next = { ...(project.memberRoleCodes ?? {}) };
+    const trimmed = value.slice(0, 8);
+    if (trimmed) next[memberId] = trimmed;
+    else delete next[memberId];
+    const updatedProjects = projects.map(p =>
+      p.id === project.id ? { ...p, memberRoleCodes: next, updatedAt: new Date().toISOString() } : p
     );
     setHasUnsavedChanges(true);
     onUpdateProjects(updatedProjects);
@@ -740,9 +756,16 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               <div>
                 <h3 className="font-semibold text-gray-700 mb-2 flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  作業員ごとの作業時間
+                  作業員ごとの作業時間・略号
                 </h3>
-                <p className="text-xs text-gray-400 mb-2">未変更なら案件全体の時間（{project.workTime.start}-{project.workTime.end}）を使用</p>
+                <p className="text-xs text-gray-400 mb-2">
+                  未変更なら案件全体の時間（{project.workTime.start}-{project.workTime.end}）を使用。略号は操配表の副セルに表示（幅・真・下・W・10t 等）
+                </p>
+                <datalist id="role-code-presets">
+                  {ROLE_CODE_PRESETS.map((p) => (
+                    <option key={p.code} value={p.code}>{p.hint}</option>
+                  ))}
+                </datalist>
                 <div className="space-y-2">
                   {assignedMembers.map((member) => {
                     const t = getMemberTime(member.id);
@@ -756,6 +779,16 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                             <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full flex-shrink-0">個別</span>
                           )}
                         </div>
+                        <input
+                          type="text"
+                          list="role-code-presets"
+                          value={getMemberRoleCode(member.id)}
+                          onChange={(e) => handleMemberRoleChange(member.id, e.target.value)}
+                          placeholder="略号"
+                          maxLength={8}
+                          title="作業/役割の略号（操配表の副セル）"
+                          className="w-16 border border-gray-300 rounded px-2 py-1 text-sm text-center"
+                        />
                         <input
                           type="time"
                           value={t.start}

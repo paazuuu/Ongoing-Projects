@@ -53,6 +53,7 @@ const projectInputSchema = z.object({
   contactMemberId: z.string().min(1).optional().nullable(),
   assignedMembers: z.array(z.string().min(1)).default([]),
   memberTimes: z.record(z.string(), timeRangeSchema).default({}),
+  memberRoleCodes: z.record(z.string(), z.string()).default({}),
   assignedVehicleIds: z.array(z.string().min(1)).default([]),
   externalPartners: z.array(externalPartnerAssignmentSchema).default([]),
   labelIds: z.array(z.string().min(1)).default([]),
@@ -64,6 +65,7 @@ const projectInputSchema = z.object({
 const emptyAssociations = (): ProjectAssociations => ({
   assignedMembers: [],
   memberTimes: {},
+  memberRoleCodes: {},
   assignedVehicleIds: [],
   externalPartners: [],
   labelIds: [],
@@ -93,6 +95,9 @@ const loadAllAssociations = async (db: Db): Promise<Map<string, ProjectAssociati
     assoc.assignedMembers.push(row.memberId);
     if (row.startTime && row.endTime) {
       assoc.memberTimes[row.memberId] = { start: row.startTime, end: row.endTime };
+    }
+    if (row.roleCode) {
+      assoc.memberRoleCodes[row.memberId] = row.roleCode;
     }
   }
   for (const row of vehicleRows) {
@@ -179,6 +184,7 @@ projectRoutes.put('/', async (c) => {
               memberId,
               startTime: input.memberTimes[memberId]?.start ?? null,
               endTime: input.memberTimes[memberId]?.end ?? null,
+              roleCode: input.memberRoleCodes[memberId] ?? null,
             }))
           ),
         ]

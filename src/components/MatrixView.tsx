@@ -18,6 +18,7 @@ interface CellItem {
   id: string;
   label: string;
   color: string;
+  sub?: string; // 作業/役割の略号（操配表の副セル）
 }
 
 const MatrixView: React.FC<MatrixViewProps> = ({ projects, members, calendarEvents, onProjectSelect }) => {
@@ -58,7 +59,13 @@ const MatrixView: React.FC<MatrixViewProps> = ({ projects, members, calendarEven
         const key = toDateKey(cur);
         if (key >= monthStart && key <= monthEnd) {
           for (const m of assigned) {
-            push(m.id, key, { kind: 'project', id: p.id, label: p.name, color: projectColor(p.priority) });
+            push(m.id, key, {
+              kind: 'project',
+              id: p.id,
+              label: p.name,
+              color: projectColor(p.priority),
+              sub: p.memberRoleCodes?.[m.id],
+            });
           }
         }
         cur.setDate(cur.getDate() + 1);
@@ -180,13 +187,21 @@ const MatrixView: React.FC<MatrixViewProps> = ({ projects, members, calendarEven
                           <div
                             key={`${item.kind}-${item.id}-${idx}`}
                             onClick={() => handleItemClick(item)}
-                            title={item.label}
-                            className={`text-[9px] leading-tight rounded px-1 py-0.5 text-white truncate ${
+                            title={item.sub ? `${item.label}（${item.sub}）` : item.label}
+                            className={`relative text-[9px] leading-tight rounded px-1 py-0.5 text-white truncate ${
                               item.kind === 'project' ? 'cursor-pointer hover:opacity-90' : ''
                             }`}
                             style={{ backgroundColor: item.color }}
                           >
                             {item.label}
+                            {item.sub && (
+                              <span
+                                className="absolute -top-1 -right-1 bg-white text-gray-800 border border-gray-300 rounded px-0.5 text-[8px] font-bold leading-none shadow-sm"
+                                title={`略号: ${item.sub}`}
+                              >
+                                {item.sub}
+                              </span>
+                            )}
                           </div>
                         ))}
                         {items.length > 2 && (

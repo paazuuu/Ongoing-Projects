@@ -66,6 +66,7 @@ CREATE TABLE IF NOT EXISTS project_member_assignments (
   member_id TEXT NOT NULL REFERENCES members(id) ON DELETE CASCADE,
   start_time TEXT,
   end_time TEXT,
+  role_code TEXT,
   created_at INTEGER NOT NULL
 );
 CREATE UNIQUE INDEX IF NOT EXISTS project_member_unique ON project_member_assignments (project_id, member_id);

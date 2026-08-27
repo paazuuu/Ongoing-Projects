@@ -68,6 +68,7 @@ export const projectMemberAssignments = sqliteTable('project_member_assignments'
   memberId: text('member_id').notNull().references(() => members.id, { onDelete: 'cascade' }),
   startTime: text('start_time'),
   endTime: text('end_time'),
+  roleCode: text('role_code'),
   createdAt: integer('created_at', { mode: 'timestamp_ms' }).notNull().$defaultFn(() => new Date()),
 }, (t) => ({
   projectMemberUnique: uniqueIndex('project_member_unique').on(t.projectId, t.memberId),

@@ -131,6 +131,10 @@ export const mockProjects: Project[] = [
       'member-1': { start: '08:00', end: '17:00' },
       'member-2': { start: '09:00', end: '15:00' }
     },
+    memberRoleCodes: {
+      'member-1': '幅',
+      'member-2': 'W'
+    },
     assignedVehicleIds: ['vehicle-3'],
     leadMemberId: 'member-1',
     contactMemberId: 'member-2',

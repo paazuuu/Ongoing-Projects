@@ -44,6 +44,7 @@ export interface PartnerAssignmentPayload {
 export interface ProjectAssociations {
   assignedMembers: string[];
   memberTimes: { [memberId: string]: { start: string; end: string } };
+  memberRoleCodes: { [memberId: string]: string };
   assignedVehicleIds: string[];
   externalPartners: PartnerAssignmentPayload[];
   labelIds: string[];
@@ -71,6 +72,7 @@ export const serializeProject = (row: ProjectRow, associations: ProjectAssociati
   contactMemberId: row.contactMemberId ?? undefined,
   assignedMembers: associations.assignedMembers,
   memberTimes: associations.memberTimes,
+  memberRoleCodes: associations.memberRoleCodes,
   assignedVehicleIds: associations.assignedVehicleIds,
   externalPartners: associations.externalPartners,
   labelIds: associations.labelIds,
