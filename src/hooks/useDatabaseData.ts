@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Member, Project, ExternalPartner, Label, CalendarEvent, EventFormData } from '../types';
-import { mockMembers, mockProjects, mockExternalPartners, mockLabels, mockCalendarEvents } from '../data/mockData';
+import { Member, Project, ExternalPartner, Label, CalendarEvent, EventFormData, Vehicle } from '../types';
+import { mockMembers, mockProjects, mockExternalPartners, mockLabels, mockCalendarEvents, mockVehicles } from '../data/mockData';
 
 const EVENTS_STORAGE_KEY = 'calendar-events';
 
@@ -48,6 +48,7 @@ export const useDatabaseData = () => {
   const [externalPartners, setExternalPartners] = useState<ExternalPartner[]>(mockExternalPartners);
   const [labels, setLabels] = useState<Label[]>(mockLabels);
   const [calendarEvents, setCalendarEvents] = useState<CalendarEvent[]>(loadStoredEvents);
+  const [vehicles, setVehicles] = useState<Vehicle[]>(mockVehicles);
   const [isLoading, setIsLoading] = useState(false);
   const [isDatabaseConnected, setIsDatabaseConnected] = useState(false);
 
@@ -193,6 +194,23 @@ export const useDatabaseData = () => {
     await apiFetch(`/api/labels/${id}`, { method: 'DELETE' });
   };
 
+  // 社有車両マスタ更新
+  const updateVehicles = async (updatedVehicles: Vehicle[]) => {
+    setVehicles(updatedVehicles);
+    if (!isDatabaseConnected) return;
+    try {
+      for (const vehicle of updatedVehicles) {
+        await apiFetch('/api/vehicles', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(vehicle),
+        });
+      }
+    } catch (error) {
+      console.error('車両更新エラー:', error);
+    }
+  };
+
   // カレンダー予定の永続化（DB接続時はAPI、未接続時はlocalStorage）
   const commitEvents = (updater: (prev: CalendarEvent[]) => CalendarEvent[]) => {
     setCalendarEvents((prev) => {
@@ -278,11 +296,13 @@ export const useDatabaseData = () => {
     externalPartners,
     labels,
     calendarEvents,
+    vehicles,
     isLoading,
     isDatabaseConnected,
     updateMembers,
     updateProjects,
     updateExternalPartners,
+    updateVehicles,
     createLabel,
     updateLabel,
     deleteLabel,

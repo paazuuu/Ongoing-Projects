@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { DragDropContext, Droppable, Draggable } from '@hello-pangea/dnd';
-import { Project, Member, ConflictAlert, ExternalPartner, Label, ProjectPriority, CalendarEvent } from '../types';
+import { Project, Member, ConflictAlert, ExternalPartner, Label, ProjectPriority, CalendarEvent, Vehicle } from '../types';
+import { vehicleCategoryLabel, vehicleCategoryColor } from '../utils/vehicles';
 import MemberDetailModal from './MemberDetailModal';
 import MemberAvatar from './MemberAvatar';
 import LabelPicker from './LabelPicker';
@@ -22,6 +23,7 @@ import {
   Star,
   Ban,
   Award,
+  Car,
   Plus,
   X
 } from 'lucide-react';
@@ -33,6 +35,7 @@ interface ProjectDetailProps {
   projects: Project[];
   labels: Label[];
   calendarEvents: CalendarEvent[];
+  vehicles: Vehicle[];
   isDatabaseConnected: boolean;
   onMemberAssignment: (projectId: string, memberIds: string[]) => void;
   onLeaderAssignment: (projectId: string, leaderId: string | undefined) => void;
@@ -50,6 +53,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   projects,
   labels,
   calendarEvents,
+  vehicles,
   isDatabaseConnected,
   onMemberAssignment,
   onLeaderAssignment,
@@ -175,6 +179,34 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     }
     setHasUnsavedChanges(true);
     onLeaderAssignment(project.id, memberId);
+  };
+
+  // 作業員ごとの作業時間（未設定は案件全体の時間）
+  const getMemberTime = (memberId: string) =>
+    project.memberTimes?.[memberId] ?? { start: project.workTime.start, end: project.workTime.end };
+
+  const handleMemberTimeChange = (memberId: string, field: 'start' | 'end', value: string) => {
+    const current = getMemberTime(memberId);
+    const nextTime = { ...current, [field]: value };
+    const memberTimes = { ...(project.memberTimes ?? {}), [memberId]: nextTime };
+    const updatedProjects = projects.map(p =>
+      p.id === project.id ? { ...p, memberTimes, updatedAt: new Date().toISOString() } : p
+    );
+    setHasUnsavedChanges(true);
+    onUpdateProjects(updatedProjects);
+  };
+
+  // 社有車両の割当トグル
+  const handleVehicleToggle = (vehicleId: string) => {
+    const current = project.assignedVehicleIds ?? [];
+    const next = current.includes(vehicleId)
+      ? current.filter((id) => id !== vehicleId)
+      : [...current, vehicleId];
+    const updatedProjects = projects.map(p =>
+      p.id === project.id ? { ...p, assignedVehicleIds: next, updatedAt: new Date().toISOString() } : p
+    );
+    setHasUnsavedChanges(true);
+    onUpdateProjects(updatedProjects);
   };
 
   // 連絡係のトグル（タップで星をON/OFF。同じ人を再タップで解除）
@@ -699,6 +731,85 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             </Droppable>
           </div>
         </div>
+
+        {/* 配置メンバーの作業時間（作業員ごとの始/終）＋ 社有車両 */}
+        {(assignedMembers.length > 0 || vehicles.length > 0) && (
+          <div className="border-t bg-white p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* 作業員ごとの作業時間 */}
+            {assignedMembers.length > 0 && (
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                  <Clock className="w-4 h-4" />
+                  作業員ごとの作業時間
+                </h3>
+                <p className="text-xs text-gray-400 mb-2">未変更なら案件全体の時間（{project.workTime.start}-{project.workTime.end}）を使用</p>
+                <div className="space-y-2">
+                  {assignedMembers.map((member) => {
+                    const t = getMemberTime(member.id);
+                    const isCustom = Boolean(project.memberTimes?.[member.id]);
+                    return (
+                      <div key={member.id} className="flex items-center gap-2 bg-gray-50 rounded-lg border border-gray-200 p-2">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <MemberAvatar member={member} />
+                          <span className="text-sm font-medium text-gray-800 truncate">{member.name}</span>
+                          {isCustom && (
+                            <span className="text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full flex-shrink-0">個別</span>
+                          )}
+                        </div>
+                        <input
+                          type="time"
+                          value={t.start}
+                          onChange={(e) => handleMemberTimeChange(member.id, 'start', e.target.value)}
+                          className="border border-gray-300 rounded px-2 py-1 text-sm"
+                        />
+                        <span className="text-gray-400">〜</span>
+                        <input
+                          type="time"
+                          value={t.end}
+                          onChange={(e) => handleMemberTimeChange(member.id, 'end', e.target.value)}
+                          className="border border-gray-300 rounded px-2 py-1 text-sm"
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* 社有車両の割当 */}
+            <div>
+              <h3 className="font-semibold text-gray-700 mb-2 flex items-center gap-1">
+                <Car className="w-4 h-4" />
+                社有車両
+              </h3>
+              <p className="text-xs text-gray-400 mb-2">この案件で使う車両をタップで選択</p>
+              <div className="flex flex-wrap gap-2">
+                {vehicles.filter((v) => v.isActive).length === 0 && (
+                  <span className="text-xs text-gray-400">車両が未登録です（車両管理から追加）</span>
+                )}
+                {vehicles.filter((v) => v.isActive).map((v) => {
+                  const selected = (project.assignedVehicleIds ?? []).includes(v.id);
+                  return (
+                    <button
+                      key={v.id}
+                      type="button"
+                      onClick={() => handleVehicleToggle(v.id)}
+                      className={`flex items-center gap-1.5 text-sm px-2.5 py-1.5 rounded-lg border transition-colors ${
+                        selected ? 'text-white border-transparent' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'
+                      }`}
+                      style={selected ? { backgroundColor: vehicleCategoryColor(v.category) } : undefined}
+                      title={`${vehicleCategoryLabel(v.category)}${v.plateNumber ? ' / ' + v.plateNumber : ''}`}
+                    >
+                      <Car className="w-3.5 h-3.5" />
+                      <span>{v.name}</span>
+                      <span className={`text-[10px] ${selected ? 'opacity-90' : 'text-gray-400'}`}>{vehicleCategoryLabel(v.category)}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* チェックリスト・コメント */}
         <div className="border-t bg-white p-6 grid grid-cols-2 gap-6">

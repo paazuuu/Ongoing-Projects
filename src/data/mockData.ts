@@ -1,4 +1,4 @@
-import { Member, Project, ExternalPartner, Label, CalendarEvent } from '../types';
+import { Member, Project, ExternalPartner, Label, CalendarEvent, Vehicle } from '../types';
 
 const toDateStr = (offsetDays: number): string =>
   new Date(Date.now() + offsetDays * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
@@ -97,6 +97,14 @@ export const mockExternalPartners: ExternalPartner[] = [
   }
 ];
 
+export const mockVehicles: Vehicle[] = [
+  { id: 'vehicle-1', name: '営業1号車', category: 'sales', plateNumber: '大阪 300 あ 12-34', notes: '', isActive: true, createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
+  { id: 'vehicle-2', name: '連絡車A', category: 'liaison', plateNumber: '大阪 500 か 56-78', notes: '', isActive: true, createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
+  { id: 'vehicle-3', name: 'Wキャブ1', category: 'wcab', plateNumber: '和泉 100 さ 90-12', notes: '4名乗車可', isActive: true, createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
+  { id: 'vehicle-4', name: '機動レッカー', category: 'mobile', plateNumber: '', notes: '緊急対応用', isActive: true, createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
+  { id: 'vehicle-5', name: 'レンタカー（随時）', category: 'rental', plateNumber: '', notes: '繁忙期手配', isActive: true, createdAt: '2025-01-01T00:00:00Z', updatedAt: '2025-01-01T00:00:00Z' },
+];
+
 export const mockLabels: Label[] = [
   { id: 'label-1', name: '緊急', color: '#ef4444', createdAt: '2025-01-01T00:00:00Z' },
   { id: 'label-2', name: '工事', color: '#3b82f6', createdAt: '2025-01-01T00:00:00Z' },
@@ -119,6 +127,11 @@ export const mockProjects: Project[] = [
     requiredMembers: 2,
     notes: '安全靴・ヘルメット必須、館内養生',
     assignedMembers: ['member-1', 'member-2'],
+    memberTimes: {
+      'member-1': { start: '08:00', end: '17:00' },
+      'member-2': { start: '09:00', end: '15:00' }
+    },
+    assignedVehicleIds: ['vehicle-3'],
     leadMemberId: 'member-1',
     contactMemberId: 'member-2',
     externalPartners: [

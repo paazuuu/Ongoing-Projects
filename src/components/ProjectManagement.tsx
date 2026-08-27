@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Member, Project, ConflictAlert, ExternalPartner, Label, ProjectWorkflowStatus, ProjectSaveData, CalendarEvent, EventFormData } from '../types';
+import { Member, Project, ConflictAlert, ExternalPartner, Label, ProjectWorkflowStatus, ProjectSaveData, CalendarEvent, EventFormData, Vehicle } from '../types';
 import Dashboard from './Dashboard';
 import MemberListSidebar from './MemberListSidebar';
 import ProjectDetail from './ProjectDetail';
@@ -7,12 +7,14 @@ import ProjectForm from './ProjectForm';
 import MemberManagement from './MemberManagement';
 import MemberDetailView from './MemberDetailView';
 import ExternalPartnerManagement from './ExternalPartnerManagement';
+import VehicleManagement from './VehicleManagement';
 import ConflictAlerts from './ConflictAlerts';
 import KanbanBoard from './KanbanBoard';
 import CalendarView from './CalendarView';
 import MyScheduleView from './MyScheduleView';
+import MatrixView from './MatrixView';
 import DebugPanel from './DebugPanel';
-import { Plus, Users, FolderOpen, Home, Building2, Trello, CalendarDays, CalendarClock } from 'lucide-react';
+import { Plus, Users, FolderOpen, Home, Building2, Trello, CalendarDays, CalendarClock, Car, Grid3x3 } from 'lucide-react';
 import { checkScheduleConflicts } from '../utils/conflictChecker';
 
 interface ProjectManagementProps {
@@ -21,9 +23,11 @@ interface ProjectManagementProps {
   externalPartners: ExternalPartner[];
   labels: Label[];
   calendarEvents: CalendarEvent[];
+  vehicles: Vehicle[];
   onUpdateProjects: (projects: Project[]) => void;
   onUpdateMembers: (members: Member[]) => void;
   onUpdateExternalPartners: (partners: ExternalPartner[]) => void;
+  onUpdateVehicles: (vehicles: Vehicle[]) => void;
   onCreateLabel: (name: string, color: string) => void;
   onUpdateLabel: (id: string, updates: { name?: string; color?: string }) => void;
   onDeleteLabel: (id: string) => void;
@@ -39,9 +43,11 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
   externalPartners,
   labels,
   calendarEvents,
+  vehicles,
   onUpdateProjects,
   onUpdateMembers,
   onUpdateExternalPartners,
+  onUpdateVehicles,
   onCreateLabel,
   onUpdateLabel,
   onDeleteLabel,
@@ -59,6 +65,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
   const [showKanbanBoard, setShowKanbanBoard] = useState(false);
   const [showCalendar, setShowCalendar] = useState(false);
   const [showMySchedule, setShowMySchedule] = useState(false);
+  const [showVehicleManagement, setShowVehicleManagement] = useState(false);
+  const [showMatrix, setShowMatrix] = useState(false);
   const [formDefaultDate, setFormDefaultDate] = useState<string | undefined>(undefined);
   const [conflicts, setConflicts] = useState<ConflictAlert[]>([]);
 
@@ -74,6 +82,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowKanbanBoard(false);
     setShowCalendar(false);
     setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
   };
 
   const handleCreateProject = () => {
@@ -87,6 +97,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowKanbanBoard(false);
     setShowCalendar(false);
     setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
   };
 
   const handleShowMemberManagement = () => {
@@ -99,6 +111,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowKanbanBoard(false);
     setShowCalendar(false);
     setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
   };
 
   const handleShowPartnerManagement = () => {
@@ -111,6 +125,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowKanbanBoard(false);
     setShowCalendar(false);
     setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
   };
 
   const handleShowDashboard = () => {
@@ -123,6 +139,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowKanbanBoard(false);
     setShowCalendar(false);
     setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
   };
 
   const handleShowKanbanBoard = () => {
@@ -135,6 +153,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowKanbanBoard(true);
     setShowCalendar(false);
     setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
   };
 
   const handleShowCalendar = () => {
@@ -147,6 +167,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowKanbanBoard(false);
     setShowCalendar(true);
     setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
   };
 
   const handleShowMySchedule = () => {
@@ -159,6 +181,36 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowKanbanBoard(false);
     setShowCalendar(false);
     setShowMySchedule(true);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
+  };
+
+  const handleShowVehicleManagement = () => {
+    setSelectedProject(null);
+    setSelectedMember(null);
+    setShowProjectForm(false);
+    setShowMemberManagement(false);
+    setShowPartnerManagement(false);
+    setShowDashboard(false);
+    setShowKanbanBoard(false);
+    setShowCalendar(false);
+    setShowMySchedule(false);
+    setShowVehicleManagement(true);
+    setShowMatrix(false);
+  };
+
+  const handleShowMatrix = () => {
+    setSelectedProject(null);
+    setSelectedMember(null);
+    setShowProjectForm(false);
+    setShowMemberManagement(false);
+    setShowPartnerManagement(false);
+    setShowDashboard(false);
+    setShowKanbanBoard(false);
+    setShowCalendar(false);
+    setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(true);
   };
 
   const handleCreateProjectForDate = (date: string) => {
@@ -172,6 +224,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowKanbanBoard(false);
     setShowCalendar(false);
     setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
   };
 
   const handleProjectStatusChange = (projectId: string, workflowStatus: ProjectWorkflowStatus) => {
@@ -261,6 +315,8 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowKanbanBoard(false);
     setShowCalendar(false);
     setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
   };
 
   const handleEditSelectedMember = () => {
@@ -362,6 +418,28 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
               <CalendarDays className="w-4 h-4" />
               カレンダー
             </button>
+            <button
+              onClick={handleShowMatrix}
+              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showMatrix
+                  ? 'bg-white bg-opacity-30 text-white'
+                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+              }`}
+            >
+              <Grid3x3 className="w-4 h-4" />
+              操配表
+            </button>
+            <button
+              onClick={handleShowVehicleManagement}
+              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showVehicleManagement
+                  ? 'bg-white bg-opacity-30 text-white'
+                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+              }`}
+            >
+              <Car className="w-4 h-4" />
+              車両管理
+            </button>
           </div>
         </div>
 
@@ -394,7 +472,18 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
 
       {/* メインコンテンツ */}
       <div className="flex-1 flex flex-col">
-        {showMySchedule ? (
+        {showMatrix ? (
+          <MatrixView
+            projects={activeProjects}
+            members={activeMembers}
+            calendarEvents={calendarEvents}
+            onProjectSelect={handleProjectSelect}
+          />
+        ) : showVehicleManagement ? (
+          <div className="flex-1 p-6 overflow-y-auto">
+            <VehicleManagement vehicles={vehicles} onUpdateVehicles={onUpdateVehicles} />
+          </div>
+        ) : showMySchedule ? (
           <MyScheduleView
             projects={activeProjects}
             members={activeMembers}
@@ -474,6 +563,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
               projects={projects}
               labels={labels}
               calendarEvents={calendarEvents}
+              vehicles={vehicles}
               isDatabaseConnected={isDatabaseConnected}
               onMemberAssignment={handleMemberAssignment}
               onLeaderAssignment={handleLeaderAssignment}
