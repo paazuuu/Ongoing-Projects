@@ -108,6 +108,10 @@ export const mockProjects: Project[] = [
   {
     id: 'project-1',
     name: '○○ビル 内装改修工事',
+    jobNo: '9866',
+    customerName: '竹中工務店',
+    salesRep: '宇佐美',
+    orderType: '一式請負',
     date: new Date().toISOString().split('T')[0], // 今日
     workTime: { start: '09:00', end: '17:00' },
     location: '東京都中央区',
@@ -137,6 +141,10 @@ export const mockProjects: Project[] = [
   {
     id: 'project-2',
     name: '△△道路 改良工事',
+    jobNo: '9902',
+    customerName: '大阪府 都市整備部',
+    salesRep: '徳永',
+    orderType: '公共工事',
     date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 明日
     endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // 5日後まで（複数日）
     workTime: { start: '08:00', end: '16:00' },

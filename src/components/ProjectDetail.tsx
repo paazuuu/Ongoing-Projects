@@ -321,11 +321,23 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
           <div className="flex items-start justify-between mb-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
+                {project.jobNo && (
+                  <span className="text-xs font-mono bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                    JOB {project.jobNo}
+                  </span>
+                )}
                 <h1 className="text-2xl font-bold text-gray-900">{project.name}</h1>
                 {hasConflicts && (
                   <AlertTriangle className="w-6 h-6 text-red-500" />
                 )}
               </div>
+              {(project.customerName || project.salesRep || project.orderType) && (
+                <div className="flex items-center flex-wrap gap-x-4 gap-y-1 text-sm text-gray-600 mb-1">
+                  {project.customerName && <span>顧客: <span className="text-gray-900">{project.customerName}</span></span>}
+                  {project.salesRep && <span>営業: <span className="text-gray-900">{project.salesRep}</span></span>}
+                  {project.orderType && <span>発注形態: <span className="text-gray-900">{project.orderType}</span></span>}
+                </div>
+              )}
               <div className="flex items-center gap-4 text-sm text-gray-600">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />

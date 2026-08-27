@@ -98,7 +98,15 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                 } ${hasConflict ? 'border-red-300' : 'border-gray-200'}`}
                               >
                                 <div className="flex items-start justify-between mb-2 gap-2">
-                                  <h3 className="font-medium text-gray-900 text-sm">{project.name}</h3>
+                                  <div className="min-w-0">
+                                    {project.jobNo && (
+                                      <span className="block text-[10px] font-mono text-gray-400">JOB {project.jobNo}</span>
+                                    )}
+                                    <h3 className="font-medium text-gray-900 text-sm">{project.name}</h3>
+                                    {project.customerName && (
+                                      <span className="block text-[11px] text-gray-500 truncate">{project.customerName}</span>
+                                    )}
+                                  </div>
                                   {hasConflict && (
                                     <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
                                   )}

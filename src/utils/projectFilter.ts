@@ -28,7 +28,7 @@ export const applyProjectFilter = (
     if (filter.priority && p.priority !== filter.priority) return false;
     if (filter.labelId && !p.labelIds.includes(filter.labelId)) return false;
     if (kw) {
-      const haystack = `${p.name} ${p.location} ${p.workContent}`.toLowerCase();
+      const haystack = `${p.name} ${p.jobNo ?? ''} ${p.customerName ?? ''} ${p.salesRep ?? ''} ${p.location} ${p.workContent}`.toLowerCase();
       if (!haystack.includes(kw)) return false;
     }
     return true;

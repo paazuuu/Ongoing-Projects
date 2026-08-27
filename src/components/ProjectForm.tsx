@@ -17,6 +17,10 @@ interface ProjectFormProps {
 const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, labels, onCreateLabel, onSave, onCancel, defaultDate }) => {
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
+    jobNo: '',
+    customerName: '',
+    salesRep: '',
+    orderType: '',
     date: defaultDate ?? '',
     endDate: defaultDate ?? '', // 既定は開始日と同じ（当日）
     workTimeStart: '09:00',
@@ -37,6 +41,10 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
     if (project) {
       setFormData({
         name: project.name,
+        jobNo: project.jobNo ?? '',
+        customerName: project.customerName ?? '',
+        salesRep: project.salesRep ?? '',
+        orderType: project.orderType ?? '',
         date: project.date,
         endDate: project.endDate ?? project.date, // 既定は開始日と同じ（当日）
         workTimeStart: project.workTime.start,
@@ -60,6 +68,10 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
 
     const projectData = {
       name: formData.name,
+      jobNo: formData.jobNo.trim() || undefined,
+      customerName: formData.customerName.trim() || undefined,
+      salesRep: formData.salesRep.trim() || undefined,
+      orderType: formData.orderType.trim() || undefined,
       date: formData.date,
       endDate: normalizedEndDate,
       workTime: {
@@ -157,6 +169,50 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
               className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="例: ○○ビル新築工事 / A社定期点検"
             />
+          </div>
+
+          {/* 案件の基本情報（既存Excelの欄に準拠） */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">JOB No.</label>
+              <input
+                type="text"
+                value={formData.jobNo}
+                onChange={(e) => handleChange('jobNo', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="例: 9866"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">顧客名</label>
+              <input
+                type="text"
+                value={formData.customerName}
+                onChange={(e) => handleChange('customerName', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="例: 竹中工務店"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">営業担当</label>
+              <input
+                type="text"
+                value={formData.salesRep}
+                onChange={(e) => handleChange('salesRep', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="例: 宇佐美"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">発注形態</label>
+              <input
+                type="text"
+                value={formData.orderType}
+                onChange={(e) => handleChange('orderType', e.target.value)}
+                className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="例: 常傭 / 一式請負 / 応援"
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

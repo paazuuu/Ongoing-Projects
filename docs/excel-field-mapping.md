@@ -44,10 +44,10 @@
 | 下請（業者・数・始/終） | ExternalPartnerAssignment.kind='subcontractor' + memberCount/representativeName/startTime/endTime | ✓ |
 | 傭車（社名・車番・車種・氏名・数・始/終） | ExternalPartnerAssignment.kind='hired_vehicle' + vehicleNumber/vehicleType/representativeName(氏名)/memberCount/start/end | ✓ |
 | 勤怠・休暇（年休・病欠・振休・研修・会議・段取り・移動…） | CalendarEvent.eventType（utils/eventTypes.ts）＋作業員ひも付け。占有種別は空き判定に連動 | ✓ |
-| JOB No. | — | ✗ |
-| 顧客名 | —（所在地はあるが顧客は別） | ✗ |
-| 営業担当 | — | ✗ |
-| 発注形態 | —（ラベルで代替可） | ✗ |
+| JOB No. | Project.jobNo | ✓ |
+| 顧客名 | Project.customerName | ✓ |
+| 営業担当 | Project.salesRep | ✓ |
+| 発注形態 | Project.orderType | ✓ |
 | 作業員ごとの始/終 | —（現状は案件全体で1つの時間） | ✗ |
 | 社有車両（営業車/連絡車/Wキャブ/レンタカー/機動） | —（傭車は対応済） | ✗ |
 | 月間 作業員×日 の俯瞰マトリクス | — | ✗ |
@@ -55,7 +55,7 @@
 
 ## 4. 残りロードマップ
 
-- Phase 1: Project に JOB No. / 顧客名 / 営業担当 / 発注形態 を追加（未）
+- Phase 1: Project に JOB No. / 顧客名 / 営業担当 / 発注形態 を追加 — **実装済**
 - Phase 2: 勤怠・休暇の種別 — **実装済**（utils/eventTypes.ts）
 - Phase 3: 配員ごとの始/終 ＋ 社有車両マスタ/割当（傭車は実装済）
 - Phase 4: 下請・傭車の精緻化 — **実装済**
