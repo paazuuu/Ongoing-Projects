@@ -4,6 +4,7 @@ import { isMemberAssigned } from '../utils/projectFilter';
 import { checkScheduleConflicts } from '../utils/conflictChecker';
 import { workflowStatusLabel, workflowStatusColor, priorityLabel, priorityColor } from '../utils/workflowStatus';
 import { WEEKDAY_LABELS, todayKey, formatEventTimeLabel } from '../utils/calendar';
+import { getEventType } from '../utils/eventTypes';
 import { CalendarClock, Clock, MapPin, Crown, AlertTriangle, User, CalendarDays } from 'lucide-react';
 
 interface MyScheduleViewProps {
@@ -232,6 +233,14 @@ const MyScheduleView: React.FC<MyScheduleViewProps> = ({
                         <div className="flex items-center gap-2 min-w-0">
                           <CalendarDays className="w-4 h-4 text-gray-400 flex-shrink-0" />
                           <span className="font-medium text-gray-800 truncate">{event.title}</span>
+                          {getEventType(event.eventType) && (
+                            <span
+                              className="text-[10px] px-1.5 py-0.5 rounded-full text-white flex-shrink-0"
+                              style={{ backgroundColor: event.color }}
+                            >
+                              {getEventType(event.eventType)!.label}
+                            </span>
+                          )}
                         </div>
                         <span className="text-xs text-gray-500 flex-shrink-0">
                           {formatEventTimeLabel(event)}

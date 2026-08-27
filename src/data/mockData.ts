@@ -120,8 +120,11 @@ export const mockProjects: Project[] = [
     externalPartners: [
       {
         partnerId: 'partner-1',
+        kind: 'subcontractor',
         memberCount: 2,
-        representativeName: '田中 一郎'
+        representativeName: '田中 一郎',
+        startTime: '09:00',
+        endTime: '17:00'
       }
     ],
     labelIds: ['label-2'],
@@ -184,8 +187,21 @@ export const mockProjects: Project[] = [
     externalPartners: [
       {
         partnerId: 'partner-1',
+        kind: 'subcontractor',
         memberCount: 1,
-        representativeName: '田中 一郎'
+        representativeName: '田中 一郎',
+        startTime: '14:00',
+        endTime: '18:00'
+      },
+      {
+        partnerId: 'partner-4',
+        kind: 'hired_vehicle',
+        memberCount: 1,
+        representativeName: '西村',
+        startTime: '14:00',
+        endTime: '17:00',
+        vehicleNumber: '8735',
+        vehicleType: '25t/RC'
       }
     ],
     labelIds: ['label-1'],
@@ -224,31 +240,34 @@ export const mockCalendarEvents: CalendarEvent[] = [
     isAllDay: false,
     startTime: '17:30',
     endTime: '18:00',
-    color: '#10b981',
+    color: '#ca8a04',
     memo: '全チーム参加。今月のヒヤリハット共有',
     memberIds: [], // 全体共有
+    eventType: 'souhai_kaigi',
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
   },
   {
     id: 'event-2',
-    title: '車両点検（社用車）',
+    title: '段取り（機材準備）',
     date: toDateStr(1),
     isAllDay: true,
-    color: '#f59e0b',
+    color: '#0ea5e9',
     memo: '',
     memberIds: ['member-4'], // 鈴木が対応
+    eventType: 'dandori',
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
   },
   {
     id: 'event-3',
-    title: '有給（佐藤）',
+    title: '年休（佐藤）',
     date: toDateStr(3),
     isAllDay: true,
     color: '#a855f7',
     memo: '終日不在',
     memberIds: ['member-2'], // 佐藤 花子
+    eventType: 'nenkyu',
     createdAt: '2025-01-01T00:00:00Z',
     updatedAt: '2025-01-01T00:00:00Z'
   }

@@ -458,19 +458,39 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             />
           </div>
 
-          {/* 協力業者表示 */}
+          {/* 協力業者（下請・傭車）表示 */}
           {assignedPartners.length > 0 && (
             <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="font-medium text-orange-900 mb-2">協力業者</div>
+              <div className="font-medium text-orange-900 mb-2">社外作業戦力（下請・傭車）</div>
               <div className="grid grid-cols-2 gap-2">
-                {assignedPartners.map((partner) => (
-                  <div key={partner.partnerId} className="bg-white rounded p-2 border border-orange-200">
-                    <div className="font-medium text-sm">{partner.name}</div>
-                    <div className="text-xs text-gray-600">
-                      {partner.memberCount}名 | 代表: {partner.representativeName || '未設定'}
+                {assignedPartners.map((partner) => {
+                  const isYousha = (partner.kind ?? 'subcontractor') === 'hired_vehicle';
+                  const timeLabel = partner.startTime || partner.endTime
+                    ? `${partner.startTime || '—'}〜${partner.endTime || '—'}`
+                    : '';
+                  return (
+                    <div key={partner.partnerId} className="bg-white rounded p-2 border border-orange-200">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white ${isYousha ? 'bg-teal-600' : 'bg-orange-600'}`}>
+                          {isYousha ? '傭車' : '下請'}
+                        </span>
+                        <span className="font-medium text-sm truncate">{partner.name}</span>
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {partner.memberCount}{isYousha ? '台' : '名'}
+                        {' | '}{isYousha ? '氏名' : '代表'}: {partner.representativeName || '未設定'}
+                      </div>
+                      {timeLabel && (
+                        <div className="text-xs text-gray-500 mt-0.5">時間: {timeLabel}</div>
+                      )}
+                      {isYousha && (partner.vehicleNumber || partner.vehicleType) && (
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          車両: {partner.vehicleType || ''}{partner.vehicleNumber ? ` (${partner.vehicleNumber})` : ''}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
