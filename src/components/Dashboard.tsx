@@ -101,7 +101,17 @@ const Dashboard: React.FC<DashboardProps> = ({
       >
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1">
-            <h3 className="font-semibold text-gray-900 mb-1">{project.name}</h3>
+            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+              {project.jobNo && (
+                <span className="text-[10px] font-mono bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">
+                  JOB {project.jobNo}
+                </span>
+              )}
+              <h3 className="font-semibold text-gray-900">{project.name}</h3>
+            </div>
+            {project.customerName && (
+              <p className="text-xs text-gray-500 mb-1">顧客: {project.customerName}</p>
+            )}
             {showDate && (
               <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
                 <Calendar className="w-4 h-4" />

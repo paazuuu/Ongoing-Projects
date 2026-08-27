@@ -20,6 +20,10 @@ export type ProjectPriority = 'low' | 'medium' | 'high';
 export interface Project {
   id: string;
   name: string;
+  jobNo?: string; // JOB No.（案件番号）
+  customerName?: string; // 顧客名
+  salesRep?: string; // 営業担当
+  orderType?: string; // 発注形態
   date: string; // 開始日（YYYY-MM-DD）
   endDate?: string; // 終了日（複数日にまたがる場合。未設定なら date と同日=単日）
   workTime: {
@@ -150,6 +154,10 @@ export interface ConflictAlert {
 
 export interface ProjectFormData {
   name: string;
+  jobNo: string;
+  customerName: string;
+  salesRep: string;
+  orderType: string;
   date: string;
   endDate: string; // 終了日（空文字なら単日）
   workTimeStart: string;
@@ -164,6 +172,10 @@ export interface ProjectFormData {
 
 export interface ProjectSaveData {
   name: string;
+  jobNo?: string;
+  customerName?: string;
+  salesRep?: string;
+  orderType?: string;
   date: string;
   endDate?: string;
   workTime: {
