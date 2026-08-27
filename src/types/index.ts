@@ -31,7 +31,8 @@ export interface Project {
   requiredMembers: number;
   notes: string;
   assignedMembers: string[];
-  leadMemberId?: string; // 担当メンバーID
+  leadMemberId?: string; // リーダー（担当）メンバーID
+  contactMemberId?: string; // 連絡係メンバーID（臨時で変わることがある）
   externalPartners: ExternalPartnerAssignment[]; // 協力業者配置情報
   labelIds: string[];
   workflowStatus: ProjectWorkflowStatus;

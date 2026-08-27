@@ -116,6 +116,7 @@ export const mockProjects: Project[] = [
     notes: '安全靴・ヘルメット必須、館内養生',
     assignedMembers: ['member-1', 'member-2'],
     leadMemberId: 'member-1',
+    contactMemberId: 'member-2',
     externalPartners: [
       {
         partnerId: 'partner-1',

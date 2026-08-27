@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Crown,
+  Star,
   Ban,
   Award,
   Plus,
@@ -71,6 +72,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const assignedMembers = members.filter(m => project.assignedMembers.includes(m.id));
   const availableMembers = members.filter(m => !project.assignedMembers.includes(m.id));
   const leadMember = project.leadMemberId ? members.find(m => m.id === project.leadMemberId) : null;
+  const contactMember = project.contactMemberId ? members.find(m => m.id === project.contactMemberId) : null;
 
   // この日程での各作業員の空き状況（他案件と日程が重なるかで判定）
   const availabilityByMember = new Map(
@@ -122,6 +124,16 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       console.log('👑 担当メンバー解除:', memberId);
       onLeaderAssignment(project.id, undefined);
     }
+
+    // 連絡係が削除された場合は連絡係も解除
+    if (project.contactMemberId === memberId) {
+      const updatedProjects = projects.map(p =>
+        p.id === project.id
+          ? { ...p, contactMemberId: undefined, updatedAt: new Date().toISOString() }
+          : p
+      );
+      onUpdateProjects(updatedProjects);
+    }
   };
 
   const handleDragEnd = (result: any) => {
@@ -163,6 +175,20 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     }
     setHasUnsavedChanges(true);
     onLeaderAssignment(project.id, memberId);
+  };
+
+  // 連絡係のトグル（タップで星をON/OFF。同じ人を再タップで解除）
+  const handleContactToggle = (memberId: string) => {
+    // 配置済みメンバーのみ連絡係にできる
+    if (!project.assignedMembers.includes(memberId)) return;
+    const newContactId = project.contactMemberId === memberId ? undefined : memberId;
+    const updatedProjects = projects.map(p =>
+      p.id === project.id
+        ? { ...p, contactMemberId: newContactId, updatedAt: new Date().toISOString() }
+        : p
+    );
+    setHasUnsavedChanges(true);
+    onUpdateProjects(updatedProjects);
   };
 
   const formatDate = (dateString: string) => {
@@ -370,10 +396,16 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               {leadMember && (
                 <div className="flex items-center gap-2">
                   <Crown className="w-5 h-5 text-yellow-500" />
-                  <span className="font-medium text-gray-700">担当:</span>
+                  <span className="font-medium text-gray-700">リーダー:</span>
                   <span className="text-gray-900">{leadMember.name}</span>
                 </div>
               )}
+
+              <div className="flex items-center gap-2">
+                <Star className={`w-5 h-5 ${contactMember ? 'text-amber-500 fill-amber-400' : 'text-gray-300'}`} />
+                <span className="font-medium text-gray-700">連絡係:</span>
+                <span className="text-gray-900">{contactMember ? contactMember.name : '未設定'}</span>
+              </div>
 
               {project.notes && (
                 <div className="flex items-start gap-2">
@@ -594,18 +626,34 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                             >
                               <MemberAvatar member={member} />
                               {project.leadMemberId === member.id && (
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center" title="リーダー">
                                   <Crown className="w-2 h-2 text-white" />
                                 </div>
                               )}
+                              {project.contactMemberId === member.id && (
+                                <div className="absolute -top-1 -left-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center" title="連絡係">
+                                  <Star className="w-2 h-2 text-white fill-white" />
+                                </div>
+                              )}
                             </div>
-                            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                               <button
                                 onClick={() => handleLeaderAssignment(member.id)}
                                 className="bg-yellow-500 text-white p-1 rounded-full shadow-lg hover:bg-yellow-600"
-                                title="担当に設定"
+                                title="リーダーに設定"
                               >
                                 <Crown className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleContactToggle(member.id)}
+                                className={`p-1 rounded-full shadow-lg text-white ${
+                                  project.contactMemberId === member.id
+                                    ? 'bg-amber-500 hover:bg-amber-600'
+                                    : 'bg-gray-400 hover:bg-amber-500'
+                                }`}
+                                title={project.contactMemberId === member.id ? '連絡係を解除' : '連絡係に設定'}
+                              >
+                                <Star className={`w-3 h-3 ${project.contactMemberId === member.id ? 'fill-white' : ''}`} />
                               </button>
                             </div>
                           </div>
