@@ -215,6 +215,7 @@ export const useDatabaseData = () => {
       color: data.color,
       memo: data.memo,
       memberIds: data.memberIds,
+      eventType: data.eventType || undefined,
       createdAt: now,
       updatedAt: now,
     };
@@ -246,6 +247,7 @@ export const useDatabaseData = () => {
               color: data.color,
               memo: data.memo,
               memberIds: data.memberIds,
+              eventType: data.eventType || undefined,
               updatedAt: now,
             }
           : ev

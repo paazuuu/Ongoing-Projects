@@ -3,7 +3,7 @@ import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea
 import { Project, Member, Label, ConflictAlert, ProjectWorkflowStatus } from '../types';
 import MemberAvatar from './MemberAvatar';
 import ProjectFilterBar from './ProjectFilterBar';
-import { AlertTriangle, Calendar } from 'lucide-react';
+import { AlertTriangle, Calendar, Star } from 'lucide-react';
 import { WORKFLOW_STATUSES, workflowStatusLabel, priorityColor, priorityLabel } from '../utils/workflowStatus';
 import { ProjectFilterState, emptyProjectFilter, applyProjectFilter } from '../utils/projectFilter';
 
@@ -74,6 +74,9 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                         const leadMember = project.leadMemberId
                           ? members.find((m) => m.id === project.leadMemberId)
                           : null;
+                        const contactMember = project.contactMemberId
+                          ? members.find((m) => m.id === project.contactMemberId)
+                          : null;
                         const otherMembers = members.filter(
                           (m) => project.assignedMembers.includes(m.id) && m.id !== project.leadMemberId
                         );
@@ -141,6 +144,12 @@ const KanbanBoard: React.FC<KanbanBoardProps> = ({
                                     <MemberAvatar key={m.id} member={m} size="sm" />
                                   ))}
                                 </div>
+                                {contactMember && (
+                                  <div className="flex items-center gap-1 mt-2 text-xs text-amber-600">
+                                    <Star className="w-3 h-3 fill-amber-400 text-amber-500" />
+                                    <span className="truncate">連絡係: {contactMember.name}</span>
+                                  </div>
+                                )}
                               </div>
                             )}
                           </Draggable>

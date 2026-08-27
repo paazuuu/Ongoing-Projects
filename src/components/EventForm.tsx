@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarEvent, EventFormData, Member } from '../types';
 import { EVENT_COLORS } from '../utils/calendar';
-import { X, Save, Trash2, Clock, Users } from 'lucide-react';
+import { EVENT_TYPES, EVENT_TYPE_CATEGORIES, getEventType } from '../utils/eventTypes';
+import { X, Save, Trash2, Clock, Users, Tag, Ban } from 'lucide-react';
 
 interface EventFormProps {
   event: CalendarEvent | null; // null=新規
@@ -22,6 +23,7 @@ const EventForm: React.FC<EventFormProps> = ({ event, defaultDate, members, onSa
     color: EVENT_COLORS[2].value, // グリーン
     memo: '',
     memberIds: [],
+    eventType: '',
   });
 
   useEffect(() => {
@@ -35,11 +37,25 @@ const EventForm: React.FC<EventFormProps> = ({ event, defaultDate, members, onSa
         color: event.color,
         memo: event.memo,
         memberIds: event.memberIds ?? [],
+        eventType: event.eventType ?? '',
       });
     } else {
       setFormData((prev) => ({ ...prev, date: defaultDate }));
     }
   }, [event, defaultDate]);
+
+  // 種別を選ぶと、色は種別の既定色に、タイトルが空なら種別名を補完する
+  const handleSelectType = (code: string) => {
+    const t = getEventType(code);
+    setFormData((prev) => ({
+      ...prev,
+      eventType: code,
+      color: t ? t.color : prev.color,
+      title: !prev.title.trim() && t ? t.label : prev.title,
+    }));
+  };
+
+  const selectedType = getEventType(formData.eventType);
 
   const toggleMember = (memberId: string) => {
     setFormData((prev) => ({
@@ -77,12 +93,47 @@ const EventForm: React.FC<EventFormProps> = ({ event, defaultDate, members, onSa
         </div>
 
         <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {/* 種別（勤怠・休暇など） */}
+          <div>
+            <label className="flex items-center gap-1 text-sm font-medium text-gray-700 mb-1">
+              <Tag className="w-4 h-4 text-gray-400" />
+              種別
+            </label>
+            <select
+              value={formData.eventType}
+              onChange={(e) => handleSelectType(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
+              <option value="">種別なし（自由な予定）</option>
+              {EVENT_TYPE_CATEGORIES.map((cat) => (
+                <optgroup key={cat} label={cat}>
+                  {EVENT_TYPES.filter((t) => t.category === cat).map((t) => (
+                    <option key={t.code} value={t.code}>
+                      {t.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+            {selectedType && (
+              <p className="mt-1 text-xs flex items-center gap-1 text-gray-500">
+                {selectedType.blocks ? (
+                  <>
+                    <Ban className="w-3 h-3 text-red-400" />
+                    この日は対象の作業員を他案件へ割り当て不可にします
+                  </>
+                ) : (
+                  <>この種別は割当を制限しません（会議・待機など）</>
+                )}
+              </p>
+            )}
+          </div>
+
           {/* タイトル */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">タイトル</label>
             <input
               type="text"
-              autoFocus
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
               placeholder="予定のタイトル"

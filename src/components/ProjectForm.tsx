@@ -106,8 +106,13 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
     if (!partnerAssignments.find(p => p.partnerId === partnerId)) {
       setPartnerAssignments(prev => [...prev, {
         partnerId,
+        kind: 'subcontractor',
         memberCount: 1,
-        representativeName: ''
+        representativeName: '',
+        startTime: '',
+        endTime: '',
+        vehicleNumber: '',
+        vehicleType: '',
       }]);
     }
   };
@@ -116,8 +121,12 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
     setPartnerAssignments(prev => prev.filter(p => p.partnerId !== partnerId));
   };
 
-  const handlePartnerUpdate = (partnerId: string, field: 'memberCount' | 'representativeName', value: number | string) => {
-    setPartnerAssignments(prev => prev.map(p => 
+  const handlePartnerUpdate = (
+    partnerId: string,
+    field: keyof ExternalPartnerAssignment,
+    value: number | string
+  ) => {
+    setPartnerAssignments(prev => prev.map(p =>
       p.partnerId === partnerId ? { ...p, [field]: value } : p
     ));
   };
@@ -312,9 +321,30 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
+
+                      {/* 区分（下請 / 傭車） */}
+                      <div className="flex gap-2 mb-2">
+                        {(['subcontractor', 'hired_vehicle'] as const).map((k) => (
+                          <button
+                            key={k}
+                            type="button"
+                            onClick={() => handlePartnerUpdate(assignment.partnerId, 'kind', k)}
+                            className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                              (assignment.kind ?? 'subcontractor') === k
+                                ? 'bg-orange-600 text-white border-orange-600'
+                                : 'bg-white text-orange-700 border-orange-300 hover:bg-orange-100'
+                            }`}
+                          >
+                            {k === 'subcontractor' ? '下請' : '傭車'}
+                          </button>
+                        ))}
+                      </div>
+
                       <div className="grid grid-cols-2 gap-2">
                         <div>
-                          <label className="block text-xs text-orange-700 mb-1">人数</label>
+                          <label className="block text-xs text-orange-700 mb-1">
+                            {(assignment.kind ?? 'subcontractor') === 'hired_vehicle' ? '台数' : '人数'}
+                          </label>
                           <input
                             type="number"
                             min="1"
@@ -324,15 +354,61 @@ const ProjectForm: React.FC<ProjectFormProps> = ({ project, externalPartners, la
                           />
                         </div>
                         <div>
-                          <label className="block text-xs text-orange-700 mb-1">代表者名</label>
+                          <label className="block text-xs text-orange-700 mb-1">
+                            {(assignment.kind ?? 'subcontractor') === 'hired_vehicle' ? '氏名（ドライバー）' : '代表者名'}
+                          </label>
                           <input
                             type="text"
                             value={assignment.representativeName}
                             onChange={(e) => handlePartnerUpdate(assignment.partnerId, 'representativeName', e.target.value)}
                             className="w-full border border-orange-300 rounded px-2 py-1 text-sm"
-                            placeholder="代表者名"
+                            placeholder={(assignment.kind ?? 'subcontractor') === 'hired_vehicle' ? '氏名' : '代表者名'}
                           />
                         </div>
+                        <div>
+                          <label className="block text-xs text-orange-700 mb-1">開始（始）</label>
+                          <input
+                            type="time"
+                            value={assignment.startTime ?? ''}
+                            onChange={(e) => handlePartnerUpdate(assignment.partnerId, 'startTime', e.target.value)}
+                            className="w-full border border-orange-300 rounded px-2 py-1 text-sm"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs text-orange-700 mb-1">終了（終）</label>
+                          <input
+                            type="time"
+                            value={assignment.endTime ?? ''}
+                            onChange={(e) => handlePartnerUpdate(assignment.partnerId, 'endTime', e.target.value)}
+                            className="w-full border border-orange-300 rounded px-2 py-1 text-sm"
+                          />
+                        </div>
+
+                        {/* 傭車のみ：車番・車種 */}
+                        {(assignment.kind ?? 'subcontractor') === 'hired_vehicle' && (
+                          <>
+                            <div>
+                              <label className="block text-xs text-orange-700 mb-1">車番</label>
+                              <input
+                                type="text"
+                                value={assignment.vehicleNumber ?? ''}
+                                onChange={(e) => handlePartnerUpdate(assignment.partnerId, 'vehicleNumber', e.target.value)}
+                                className="w-full border border-orange-300 rounded px-2 py-1 text-sm"
+                                placeholder="例: 8735"
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-xs text-orange-700 mb-1">車種</label>
+                              <input
+                                type="text"
+                                value={assignment.vehicleType ?? ''}
+                                onChange={(e) => handlePartnerUpdate(assignment.partnerId, 'vehicleType', e.target.value)}
+                                className="w-full border border-orange-300 rounded px-2 py-1 text-sm"
+                                placeholder="例: 25t/RC・高床T/L"
+                              />
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   );

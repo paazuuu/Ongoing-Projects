@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Project, Member, ConflictAlert, ExternalPartner } from '../types';
-import { Calendar, Clock, MapPin, Users, AlertTriangle, CheckCircle, Plus } from 'lucide-react';
+import { Calendar, Clock, MapPin, Users, AlertTriangle, CheckCircle, Plus, Star, Crown } from 'lucide-react';
 import { checkScheduleConflicts } from '../utils/conflictChecker';
 import MemberAvatar from './MemberAvatar';
 import { workflowStatusLabel, workflowStatusColor } from '../utils/workflowStatus';
@@ -88,6 +88,7 @@ const Dashboard: React.FC<DashboardProps> = ({
       sum + assignment.memberCount, 0
     );
     const leadMember = project.leadMemberId ? activeMembers.find(m => m.id === project.leadMemberId) : null;
+    const contactMember = project.contactMemberId ? activeMembers.find(m => m.id === project.contactMemberId) : null;
     const hasConflicts = conflicts.some(c => c.conflictingProjects.some(cp => cp === project.name));
     
     return (
@@ -131,6 +132,22 @@ const Dashboard: React.FC<DashboardProps> = ({
             <MapPin className="w-4 h-4" />
             <span className="truncate">{project.location}</span>
           </div>
+          {(leadMember || contactMember) && (
+            <div className="flex items-center gap-3 flex-wrap">
+              {leadMember && (
+                <span className="flex items-center gap-1">
+                  <Crown className="w-3.5 h-3.5 text-yellow-500" />
+                  <span className="truncate">{leadMember.name}</span>
+                </span>
+              )}
+              {contactMember && (
+                <span className="flex items-center gap-1">
+                  <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                  <span className="truncate">連絡係: {contactMember.name}</span>
+                </span>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="flex items-center justify-between">

@@ -1,4 +1,5 @@
 import { Project, Member, CalendarEvent } from '../types';
+import { eventTypeBlocks } from './eventTypes';
 
 // プロジェクトの実効的な日程レンジ [開始日, 終了日]（endDate未設定なら単日）
 export const projectDateRange = (project: Project): { start: string; end: string } => {
@@ -67,7 +68,7 @@ export const getMemberAvailability = (
     .filter((c) => rangesOverlap(target.start, target.end, c.start, c.end));
 
   const eventConflicts: AvailabilityConflict[] = events
-    .filter((e) => e.memberIds?.includes(member.id))
+    .filter((e) => e.memberIds?.includes(member.id) && eventTypeBlocks(e.eventType))
     .map((e) => ({
       source: 'event' as const,
       id: e.id,

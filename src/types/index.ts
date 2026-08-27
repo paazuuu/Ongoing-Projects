@@ -31,7 +31,8 @@ export interface Project {
   requiredMembers: number;
   notes: string;
   assignedMembers: string[];
-  leadMemberId?: string; // 担当メンバーID
+  leadMemberId?: string; // リーダー（担当）メンバーID
+  contactMemberId?: string; // 連絡係メンバーID（臨時で変わることがある）
   externalPartners: ExternalPartnerAssignment[]; // 協力業者配置情報
   labelIds: string[];
   workflowStatus: ProjectWorkflowStatus;
@@ -60,6 +61,7 @@ export interface CalendarEvent {
   color: string; // 表示色（TIMETREEのカラーラベル相当）
   memo: string;
   memberIds: string[]; // ひも付く作業員（空=全体/共有の予定）
+  eventType?: string; // 勤怠・予定の種別コード（EVENT_TYPES の code。未設定=自由な予定）
   createdAt: string;
   updatedAt: string;
 }
@@ -87,6 +89,7 @@ export interface EventFormData {
   color: string;
   memo: string;
   memberIds: string[];
+  eventType: string; // 勤怠・予定の種別コード（空=自由な予定）
 }
 
 export interface ChecklistItem {
@@ -115,10 +118,18 @@ export interface ExternalPartner {
   updatedAt: string;
 }
 
+// 下請 / 傭車 の区分
+export type PartnerKind = 'subcontractor' | 'hired_vehicle';
+
 export interface ExternalPartnerAssignment {
   partnerId: string;
-  memberCount: number;
-  representativeName: string;
+  kind?: PartnerKind; // 下請(subcontractor) / 傭車(hired_vehicle)。未設定は下請扱い
+  memberCount: number; // 数（人数・台数）
+  representativeName: string; // 代表者名（傭車の場合はドライバー氏名）
+  startTime?: string; // 始
+  endTime?: string; // 終
+  vehicleNumber?: string; // 車番（傭車）
+  vehicleType?: string; // 車種（傭車）
 }
 
 export interface Assignment {

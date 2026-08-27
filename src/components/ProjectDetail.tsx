@@ -19,6 +19,7 @@ import {
   AlertTriangle,
   CheckCircle,
   Crown,
+  Star,
   Ban,
   Award,
   Plus,
@@ -71,6 +72,7 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
   const assignedMembers = members.filter(m => project.assignedMembers.includes(m.id));
   const availableMembers = members.filter(m => !project.assignedMembers.includes(m.id));
   const leadMember = project.leadMemberId ? members.find(m => m.id === project.leadMemberId) : null;
+  const contactMember = project.contactMemberId ? members.find(m => m.id === project.contactMemberId) : null;
 
   // この日程での各作業員の空き状況（他案件と日程が重なるかで判定）
   const availabilityByMember = new Map(
@@ -122,6 +124,16 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
       console.log('👑 担当メンバー解除:', memberId);
       onLeaderAssignment(project.id, undefined);
     }
+
+    // 連絡係が削除された場合は連絡係も解除
+    if (project.contactMemberId === memberId) {
+      const updatedProjects = projects.map(p =>
+        p.id === project.id
+          ? { ...p, contactMemberId: undefined, updatedAt: new Date().toISOString() }
+          : p
+      );
+      onUpdateProjects(updatedProjects);
+    }
   };
 
   const handleDragEnd = (result: any) => {
@@ -163,6 +175,20 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
     }
     setHasUnsavedChanges(true);
     onLeaderAssignment(project.id, memberId);
+  };
+
+  // 連絡係のトグル（タップで星をON/OFF。同じ人を再タップで解除）
+  const handleContactToggle = (memberId: string) => {
+    // 配置済みメンバーのみ連絡係にできる
+    if (!project.assignedMembers.includes(memberId)) return;
+    const newContactId = project.contactMemberId === memberId ? undefined : memberId;
+    const updatedProjects = projects.map(p =>
+      p.id === project.id
+        ? { ...p, contactMemberId: newContactId, updatedAt: new Date().toISOString() }
+        : p
+    );
+    setHasUnsavedChanges(true);
+    onUpdateProjects(updatedProjects);
   };
 
   const formatDate = (dateString: string) => {
@@ -370,10 +396,16 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
               {leadMember && (
                 <div className="flex items-center gap-2">
                   <Crown className="w-5 h-5 text-yellow-500" />
-                  <span className="font-medium text-gray-700">担当:</span>
+                  <span className="font-medium text-gray-700">リーダー:</span>
                   <span className="text-gray-900">{leadMember.name}</span>
                 </div>
               )}
+
+              <div className="flex items-center gap-2">
+                <Star className={`w-5 h-5 ${contactMember ? 'text-amber-500 fill-amber-400' : 'text-gray-300'}`} />
+                <span className="font-medium text-gray-700">連絡係:</span>
+                <span className="text-gray-900">{contactMember ? contactMember.name : '未設定'}</span>
+              </div>
 
               {project.notes && (
                 <div className="flex items-start gap-2">
@@ -426,19 +458,39 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
             />
           </div>
 
-          {/* 協力業者表示 */}
+          {/* 協力業者（下請・傭車）表示 */}
           {assignedPartners.length > 0 && (
             <div className="mt-4 p-3 bg-orange-50 rounded-lg border border-orange-200">
-              <div className="font-medium text-orange-900 mb-2">協力業者</div>
+              <div className="font-medium text-orange-900 mb-2">社外作業戦力（下請・傭車）</div>
               <div className="grid grid-cols-2 gap-2">
-                {assignedPartners.map((partner) => (
-                  <div key={partner.partnerId} className="bg-white rounded p-2 border border-orange-200">
-                    <div className="font-medium text-sm">{partner.name}</div>
-                    <div className="text-xs text-gray-600">
-                      {partner.memberCount}名 | 代表: {partner.representativeName || '未設定'}
+                {assignedPartners.map((partner) => {
+                  const isYousha = (partner.kind ?? 'subcontractor') === 'hired_vehicle';
+                  const timeLabel = partner.startTime || partner.endTime
+                    ? `${partner.startTime || '—'}〜${partner.endTime || '—'}`
+                    : '';
+                  return (
+                    <div key={partner.partnerId} className="bg-white rounded p-2 border border-orange-200">
+                      <div className="flex items-center gap-1.5 mb-0.5">
+                        <span className={`text-[10px] px-1.5 py-0.5 rounded-full text-white ${isYousha ? 'bg-teal-600' : 'bg-orange-600'}`}>
+                          {isYousha ? '傭車' : '下請'}
+                        </span>
+                        <span className="font-medium text-sm truncate">{partner.name}</span>
+                      </div>
+                      <div className="text-xs text-gray-600">
+                        {partner.memberCount}{isYousha ? '台' : '名'}
+                        {' | '}{isYousha ? '氏名' : '代表'}: {partner.representativeName || '未設定'}
+                      </div>
+                      {timeLabel && (
+                        <div className="text-xs text-gray-500 mt-0.5">時間: {timeLabel}</div>
+                      )}
+                      {isYousha && (partner.vehicleNumber || partner.vehicleType) && (
+                        <div className="text-xs text-gray-500 mt-0.5">
+                          車両: {partner.vehicleType || ''}{partner.vehicleNumber ? ` (${partner.vehicleNumber})` : ''}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}
@@ -594,18 +646,34 @@ const ProjectDetail: React.FC<ProjectDetailProps> = ({
                             >
                               <MemberAvatar member={member} />
                               {project.leadMemberId === member.id && (
-                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center">
+                                <div className="absolute -top-1 -right-1 w-4 h-4 bg-yellow-500 rounded-full flex items-center justify-center" title="リーダー">
                                   <Crown className="w-2 h-2 text-white" />
                                 </div>
                               )}
+                              {project.contactMemberId === member.id && (
+                                <div className="absolute -top-1 -left-1 w-4 h-4 bg-amber-500 rounded-full flex items-center justify-center" title="連絡係">
+                                  <Star className="w-2 h-2 text-white fill-white" />
+                                </div>
+                              )}
                             </div>
-                            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <div className="absolute -bottom-6 left-1/2 transform -translate-x-1/2 opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
                               <button
                                 onClick={() => handleLeaderAssignment(member.id)}
                                 className="bg-yellow-500 text-white p-1 rounded-full shadow-lg hover:bg-yellow-600"
-                                title="担当に設定"
+                                title="リーダーに設定"
                               >
                                 <Crown className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleContactToggle(member.id)}
+                                className={`p-1 rounded-full shadow-lg text-white ${
+                                  project.contactMemberId === member.id
+                                    ? 'bg-amber-500 hover:bg-amber-600'
+                                    : 'bg-gray-400 hover:bg-amber-500'
+                                }`}
+                                title={project.contactMemberId === member.id ? '連絡係を解除' : '連絡係に設定'}
+                              >
+                                <Star className={`w-3 h-3 ${project.contactMemberId === member.id ? 'fill-white' : ''}`} />
                               </button>
                             </div>
                           </div>
