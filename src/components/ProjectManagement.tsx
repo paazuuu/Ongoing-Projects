@@ -15,7 +15,7 @@ import MyScheduleView from './MyScheduleView';
 import MatrixView from './MatrixView';
 import WorkPlanPrintView from './WorkPlanPrintView';
 import DebugPanel from './DebugPanel';
-import { Plus, Users, FolderOpen, Home, Building2, Trello, CalendarDays, CalendarClock, Car, Grid3x3, Printer } from 'lucide-react';
+import { Plus, Users, FolderOpen, Home, Building2, Trello, CalendarDays, CalendarClock, Car, Grid3x3, Printer, Database } from 'lucide-react';
 import { checkScheduleConflicts } from '../utils/conflictChecker';
 
 interface ProjectManagementProps {
@@ -38,6 +38,22 @@ interface ProjectManagementProps {
   isDatabaseConnected: boolean;
 }
 
+// 画面（ビュー）を単一の状態で管理。真偽値フラグの取りこぼしによる
+// 「2画面同時表示 / 遷移不能」を構造的に防ぐ。
+type ViewKey =
+  | 'dashboard'
+  | 'kanban'
+  | 'calendar'
+  | 'matrix'
+  | 'mySchedule'
+  | 'workPlan'
+  | 'members'
+  | 'partners'
+  | 'vehicles'
+  | 'projectForm'
+  | 'projectDetail'
+  | 'memberDetail';
+
 const ProjectManagement: React.FC<ProjectManagementProps> = ({
   projects,
   members,
@@ -57,203 +73,57 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
   onDeleteCalendarEvent,
   isDatabaseConnected,
 }) => {
+  const [view, setView] = useState<ViewKey>('dashboard');
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
-  const [showProjectForm, setShowProjectForm] = useState(false);
-  const [showMemberManagement, setShowMemberManagement] = useState(false);
-  const [showPartnerManagement, setShowPartnerManagement] = useState(false);
-  const [showDashboard, setShowDashboard] = useState(true);
-  const [showKanbanBoard, setShowKanbanBoard] = useState(false);
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [showMySchedule, setShowMySchedule] = useState(false);
-  const [showVehicleManagement, setShowVehicleManagement] = useState(false);
-  const [showMatrix, setShowMatrix] = useState(false);
-  const [showWorkPlan, setShowWorkPlan] = useState(false);
   const [formDefaultDate, setFormDefaultDate] = useState<string | undefined>(undefined);
   const [conflicts, setConflicts] = useState<ConflictAlert[]>([]);
 
   const activeProjects = projects.filter(p => p.isActive);
   const activeMembers = members.filter(m => m.isActive);
 
-  const handleProjectSelect = (project: Project) => {
-    setSelectedProject(project);
-    setShowProjectForm(false);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
+  // ナビゲーション（メニュー）: 単一ビューへ切り替え、選択状態はクリア
+  const goTo = (next: ViewKey) => {
+    setSelectedProject(null);
+    setSelectedMember(null);
+    setFormDefaultDate(undefined);
+    setView(next);
   };
+
+  const handleShowDashboard = () => goTo('dashboard');
+  const handleShowMemberManagement = () => goTo('members');
+  const handleShowPartnerManagement = () => goTo('partners');
+  const handleShowKanbanBoard = () => goTo('kanban');
+  const handleShowCalendar = () => goTo('calendar');
+  const handleShowMySchedule = () => goTo('mySchedule');
+  const handleShowVehicleManagement = () => goTo('vehicles');
+  const handleShowMatrix = () => goTo('matrix');
+  const handleShowWorkPlan = () => goTo('workPlan');
 
   const handleCreateProject = () => {
+    setSelectedProject(null);
+    setSelectedMember(null);
     setFormDefaultDate(undefined);
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setShowProjectForm(true);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
-  };
-
-  const handleShowMemberManagement = () => {
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setShowProjectForm(false);
-    setShowMemberManagement(true);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
-  };
-
-  const handleShowPartnerManagement = () => {
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setShowProjectForm(false);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(true);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
-  };
-
-  const handleShowDashboard = () => {
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setShowProjectForm(false);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(true);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
-  };
-
-  const handleShowKanbanBoard = () => {
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setShowProjectForm(false);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(true);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
-  };
-
-  const handleShowCalendar = () => {
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setShowProjectForm(false);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(true);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
-  };
-
-  const handleShowMySchedule = () => {
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setShowProjectForm(false);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(true);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
-  };
-
-  const handleShowVehicleManagement = () => {
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setShowProjectForm(false);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(true);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
-  };
-
-  const handleShowMatrix = () => {
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setShowProjectForm(false);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(true);
-    setShowWorkPlan(false);
-  };
-
-  const handleShowWorkPlan = () => {
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setShowProjectForm(false);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(true);
+    setView('projectForm');
   };
 
   const handleCreateProjectForDate = (date: string) => {
-    setFormDefaultDate(date);
     setSelectedProject(null);
     setSelectedMember(null);
-    setShowProjectForm(true);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
+    setFormDefaultDate(date);
+    setView('projectForm');
+  };
+
+  const handleProjectSelect = (project: Project) => {
+    setSelectedMember(null);
+    setSelectedProject(project);
+    setView('projectDetail');
+  };
+
+  const handleMemberSelect = (member: Member) => {
+    setSelectedProject(null);
+    setSelectedMember(member);
+    setView('memberDetail');
   };
 
   const handleProjectStatusChange = (projectId: string, workflowStatus: ProjectWorkflowStatus) => {
@@ -267,15 +137,15 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
 
   const handleProjectSave = (projectData: ProjectSaveData) => {
     const now = new Date().toISOString();
-    
+
+    let updatedProjects: Project[];
     if (selectedProject) {
       // 更新
-      const updatedProjects = projects.map(p =>
+      updatedProjects = projects.map(p =>
         p.id === selectedProject.id
           ? { ...p, ...projectData, updatedAt: now }
           : p
       );
-      onUpdateProjects(updatedProjects);
     } else {
       // 新規作成
       const newProject: Project = {
@@ -287,16 +157,15 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
         createdAt: now,
         updatedAt: now,
       };
-      onUpdateProjects([...projects, newProject]);
+      updatedProjects = [...projects, newProject];
     }
-    
-    setShowProjectForm(false);
-    setShowDashboard(true);
-    setFormDefaultDate(undefined);
 
-    // 競合チェック
-    const newConflicts = checkScheduleConflicts(projects, activeMembers);
-    setConflicts(newConflicts);
+    onUpdateProjects(updatedProjects);
+    setFormDefaultDate(undefined);
+    setView('dashboard');
+
+    // 競合チェック（保存後の最新データで判定）
+    setConflicts(checkScheduleConflicts(updatedProjects, activeMembers));
   };
 
   const handleProjectDelete = (projectId: string) => {
@@ -307,21 +176,19 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     );
     onUpdateProjects(updatedProjects);
     setSelectedProject(null);
+    setView('dashboard');
   };
 
   const handleMemberAssignment = (projectId: string, memberIds: string[]) => {
-    console.log('🎯 メンバー配置変更:', projectId, memberIds);
     const updatedProjects = projects.map(p =>
       p.id === projectId
         ? { ...p, assignedMembers: memberIds, updatedAt: new Date().toISOString() }
         : p
     );
-    console.log('📊 更新されたプロジェクト:', updatedProjects.find(p => p.id === projectId));
     onUpdateProjects(updatedProjects);
-    
+
     // 競合チェック
-    const newConflicts = checkScheduleConflicts(updatedProjects, activeMembers);
-    setConflicts(newConflicts);
+    setConflicts(checkScheduleConflicts(updatedProjects, activeMembers));
   };
 
   const handleLeaderAssignment = (projectId: string, leaderId: string | undefined) => {
@@ -333,25 +200,9 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     onUpdateProjects(updatedProjects);
   };
 
-  const handleMemberSelect = (member: Member) => {
-    setSelectedMember(member);
-    setSelectedProject(null);
-    setShowProjectForm(false);
-    setShowMemberManagement(false);
-    setShowPartnerManagement(false);
-    setShowDashboard(false);
-    setShowKanbanBoard(false);
-    setShowCalendar(false);
-    setShowMySchedule(false);
-    setShowVehicleManagement(false);
-    setShowMatrix(false);
-    setShowWorkPlan(false);
-  };
-
   const handleEditSelectedMember = () => {
-    setShowMemberManagement(true);
-    // MemberManagementコンポーネントで選択されたメンバーを編集状態にする処理は
-    // MemberManagementコンポーネント内で実装する必要があります
+    // メンバー管理画面へ（個別編集は MemberManagement 内で実施）
+    setView('members');
   };
 
   const handleDeleteMember = (memberId: string) => {
@@ -362,7 +213,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     );
     onUpdateMembers(updatedMembers);
     setSelectedMember(null);
-    setShowDashboard(true);
+    setView('dashboard');
   };
 
   const handleRestoreMember = (memberId: string) => {
@@ -374,114 +225,87 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     onUpdateMembers(updatedMembers);
   };
 
+  // ライブデータで最新化した選択中プロジェクト（配置更新などを即反映）
+  const liveSelectedProject = selectedProject
+    ? projects.find(p => p.id === selectedProject.id) ?? selectedProject
+    : null;
+
+  // サイドバーのナビ定義（グループ分けで見やすく）
+  const navGroups: { title: string; items: { key: ViewKey; label: string; icon: typeof Home; onClick: () => void; accent?: boolean }[] }[] = [
+    {
+      title: '俯瞰・進捗',
+      items: [
+        { key: 'dashboard', label: 'ダッシュボード', icon: Home, onClick: handleShowDashboard },
+        { key: 'kanban', label: 'ステータスボード', icon: Trello, onClick: handleShowKanbanBoard },
+        { key: 'calendar', label: 'カレンダー', icon: CalendarDays, onClick: handleShowCalendar },
+        { key: 'matrix', label: '操配表', icon: Grid3x3, onClick: handleShowMatrix },
+      ],
+    },
+    {
+      title: '案件・割り振り',
+      items: [
+        { key: 'projectForm', label: '新規プロジェクト', icon: Plus, onClick: handleCreateProject, accent: true },
+      ],
+    },
+    {
+      title: '個人・出力',
+      items: [
+        { key: 'mySchedule', label: 'マイスケジュール', icon: CalendarClock, onClick: handleShowMySchedule },
+        { key: 'workPlan', label: '作業計画表（印刷）', icon: Printer, onClick: handleShowWorkPlan },
+      ],
+    },
+    {
+      title: 'マスタ管理',
+      items: [
+        { key: 'members', label: 'メンバー管理', icon: Users, onClick: handleShowMemberManagement },
+        { key: 'partners', label: '協力業者管理', icon: Building2, onClick: handleShowPartnerManagement },
+        { key: 'vehicles', label: '車両管理', icon: Car, onClick: handleShowVehicleManagement },
+      ],
+    },
+  ];
+
   return (
     <div className="h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex">
       {/* サイドバー */}
       <div className="w-80 bg-white shadow-lg border-r border-gray-200 flex flex-col">
-        <div className="p-6 border-b bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
-          <h1 className="text-xl font-bold mb-1">工事・請負プロジェクト管理</h1>
-          <p className="text-xs text-blue-100 mb-4">案件づくり・人員割り振り・進捗の見える化</p>
-          <div className="space-y-2">
-            <button
-              onClick={handleShowDashboard}
-              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                showDashboard 
-                  ? 'bg-white bg-opacity-30 text-white' 
-                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-              }`}
-            >
-              <Home className="w-4 h-4" />
-              ダッシュボード
-            </button>
-            <button
-              onClick={handleCreateProject}
-              className="w-full flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all duration-200 text-white"
-            >
-              <Plus className="w-4 h-4" />
-              新規プロジェクト
-            </button>
-            <button
-              onClick={handleShowMemberManagement}
-              className="w-full flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all duration-200 text-white"
-            >
-              <Users className="w-4 h-4" />
-              メンバー管理
-            </button>
-            <button
-              onClick={handleShowPartnerManagement}
-              className="w-full flex items-center gap-2 bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg transition-all duration-200 text-white"
-            >
-              <Building2 className="w-4 h-4" />
-              協力業者管理
-            </button>
-            <button
-              onClick={handleShowKanbanBoard}
-              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                showKanbanBoard
-                  ? 'bg-white bg-opacity-30 text-white'
-                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-              }`}
-            >
-              <Trello className="w-4 h-4" />
-              ステータスボード
-            </button>
-            <button
-              onClick={handleShowMySchedule}
-              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                showMySchedule
-                  ? 'bg-white bg-opacity-30 text-white'
-                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-              }`}
-            >
-              <CalendarClock className="w-4 h-4" />
-              マイスケジュール
-            </button>
-            <button
-              onClick={handleShowCalendar}
-              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                showCalendar
-                  ? 'bg-white bg-opacity-30 text-white'
-                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-              }`}
-            >
-              <CalendarDays className="w-4 h-4" />
-              カレンダー
-            </button>
-            <button
-              onClick={handleShowMatrix}
-              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                showMatrix
-                  ? 'bg-white bg-opacity-30 text-white'
-                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-              }`}
-            >
-              <Grid3x3 className="w-4 h-4" />
-              操配表
-            </button>
-            <button
-              onClick={handleShowVehicleManagement}
-              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                showVehicleManagement
-                  ? 'bg-white bg-opacity-30 text-white'
-                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-              }`}
-            >
-              <Car className="w-4 h-4" />
-              車両管理
-            </button>
-            <button
-              onClick={handleShowWorkPlan}
-              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
-                showWorkPlan
-                  ? 'bg-white bg-opacity-30 text-white'
-                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
-              }`}
-            >
-              <Printer className="w-4 h-4" />
-              作業計画表（印刷）
-            </button>
-          </div>
+        <div className="p-5 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+          <h1 className="text-lg font-bold leading-tight">工事・請負プロジェクト管理</h1>
+          <p className="text-xs text-blue-100 mt-1">案件づくり・人員割り振り・進捗の見える化</p>
         </div>
+
+        {/* ナビゲーション */}
+        <nav className="p-3 space-y-4 border-b overflow-y-auto">
+          {navGroups.map((group) => (
+            <div key={group.title}>
+              <div className="px-2 mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+                {group.title}
+              </div>
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const isActive = view === item.key;
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.key}
+                      onClick={item.onClick}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-sm'
+                          : item.accent
+                          ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                          : 'text-gray-700 hover:bg-gray-100'
+                      }`}
+                    >
+                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
 
         {/* 競合アラート */}
         {conflicts.length > 0 && (
@@ -491,15 +315,16 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
         )}
 
         {/* データベース連携状況 */}
-        <div className="p-4 border-b text-xs">
+        <div className="px-4 py-2.5 border-b text-xs flex items-center gap-1.5">
+          <Database className={`w-3.5 h-3.5 ${isDatabaseConnected ? 'text-green-600' : 'text-gray-400'}`} />
           {isDatabaseConnected ? (
-            <span className="text-green-600">データベース連携中</span>
+            <span className="text-green-600 font-medium">データベース連携中</span>
           ) : (
             <span className="text-gray-400">モックデータ使用中</span>
           )}
         </div>
 
-        {/* プロジェクト一覧 */}
+        {/* メンバー一覧 */}
         <div className="flex-1 overflow-y-auto">
           <MemberListSidebar
             members={activeMembers}
@@ -512,7 +337,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
 
       {/* メインコンテンツ */}
       <div className="flex-1 flex flex-col">
-        {showWorkPlan ? (
+        {view === 'workPlan' ? (
           <WorkPlanPrintView
             projects={activeProjects}
             members={activeMembers}
@@ -520,25 +345,25 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
             vehicles={vehicles}
             calendarEvents={calendarEvents}
           />
-        ) : showMatrix ? (
+        ) : view === 'matrix' ? (
           <MatrixView
             projects={activeProjects}
             members={activeMembers}
             calendarEvents={calendarEvents}
             onProjectSelect={handleProjectSelect}
           />
-        ) : showVehicleManagement ? (
+        ) : view === 'vehicles' ? (
           <div className="flex-1 p-6 overflow-y-auto">
             <VehicleManagement vehicles={vehicles} onUpdateVehicles={onUpdateVehicles} />
           </div>
-        ) : showMySchedule ? (
+        ) : view === 'mySchedule' ? (
           <MyScheduleView
             projects={activeProjects}
             members={activeMembers}
             calendarEvents={calendarEvents}
             onProjectSelect={handleProjectSelect}
           />
-        ) : showCalendar ? (
+        ) : view === 'calendar' ? (
           <CalendarView
             projects={activeProjects}
             members={activeMembers}
@@ -549,15 +374,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
             onUpdateEvent={onUpdateCalendarEvent}
             onDeleteEvent={onDeleteCalendarEvent}
           />
-        ) : showDashboard ? (
-          <Dashboard
-            projects={activeProjects}
-            members={activeMembers}
-            externalPartners={externalPartners}
-            onProjectSelect={handleProjectSelect}
-            onCreateProject={handleCreateProject}
-          />
-        ) : showKanbanBoard ? (
+        ) : view === 'kanban' ? (
           <KanbanBoard
             projects={projects}
             members={activeMembers}
@@ -566,33 +383,33 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
             onProjectSelect={handleProjectSelect}
             onProjectStatusChange={handleProjectStatusChange}
           />
-        ) : showProjectForm ? (
-          <div className="flex-1 p-6">
+        ) : view === 'projectForm' ? (
+          <div className="flex-1 p-6 overflow-y-auto">
             <ProjectForm
-              project={selectedProject}
+              project={liveSelectedProject}
               externalPartners={externalPartners}
               labels={labels}
               onCreateLabel={onCreateLabel}
               onSave={handleProjectSave}
-              onCancel={() => setShowProjectForm(false)}
+              onCancel={() => setView(selectedProject ? 'projectDetail' : 'dashboard')}
               defaultDate={formDefaultDate}
             />
           </div>
-        ) : showMemberManagement ? (
-          <div className="flex-1 p-6">
+        ) : view === 'members' ? (
+          <div className="flex-1 p-6 overflow-y-auto">
             <MemberManagement
               members={members}
               onUpdateMembers={onUpdateMembers}
             />
           </div>
-        ) : showPartnerManagement ? (
-          <div className="flex-1 p-6">
+        ) : view === 'partners' ? (
+          <div className="flex-1 p-6 overflow-y-auto">
             <ExternalPartnerManagement
               partners={externalPartners}
               onUpdatePartners={onUpdateExternalPartners}
             />
           </div>
-        ) : selectedMember ? (
+        ) : view === 'memberDetail' && selectedMember ? (
           <div className="flex-1">
             <MemberDetailView
               member={selectedMember}
@@ -602,10 +419,10 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
               onRestoreMember={handleRestoreMember}
             />
           </div>
-        ) : selectedProject ? (
+        ) : view === 'projectDetail' && liveSelectedProject ? (
           <div className="flex-1">
             <ProjectDetail
-              project={projects.find(p => p.id === selectedProject.id) ?? selectedProject}
+              project={liveSelectedProject}
               members={activeMembers}
               externalPartners={externalPartners}
               projects={projects}
@@ -617,11 +434,19 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
               onLeaderAssignment={handleLeaderAssignment}
               onUpdateProjects={onUpdateProjects}
               onProjectDelete={handleProjectDelete}
-              onEditProject={() => setShowProjectForm(true)}
+              onEditProject={() => setView('projectForm')}
               onCreateLabel={onCreateLabel}
               conflicts={conflicts}
             />
           </div>
+        ) : view === 'dashboard' ? (
+          <Dashboard
+            projects={activeProjects}
+            members={activeMembers}
+            externalPartners={externalPartners}
+            onProjectSelect={handleProjectSelect}
+            onCreateProject={handleCreateProject}
+          />
         ) : (
           <div className="flex-1 flex items-center justify-center">
             <div className="text-center text-gray-500">
