@@ -2,22 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
-/* 印刷用: 作業計画表など .print-area 以外を隠し、A4に収める */
+/* 印刷用: 作業計画表ビュー表示中(body.print-workplan)のみ .print-area 以外を隠しA4に収める。
+   他ビューでの Ctrl+P は通常印刷のまま（全体が白紙になる問題を防ぐ）。 */
 @media print {
-  body * {
+  body.print-workplan * {
     visibility: hidden;
   }
-  .print-area,
-  .print-area * {
+  body.print-workplan .print-area,
+  body.print-workplan .print-area * {
     visibility: visible;
   }
-  .print-area {
+  body.print-workplan .print-area {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
   }
-  .no-print {
+  body.print-workplan .no-print {
     display: none !important;
   }
   @page {
