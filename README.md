@@ -32,13 +32,14 @@
 - **複数日程の案件**: 開始日・終了日を指定でき、期間中はその作業員を別案件に割り当て不可（例: 9/1〜9/10 現場に入っている人は 9/7 の別案件に選べない）
 - **競合検知**: 同一メンバーのスケジュール重複を自動検出
 - **ステータスボード（Jooto風）**: 未着手→進行中→完了をカンバンで俯瞰・ドラッグ移動。担当者/優先度/ラベル/キーワードで絞り込み
-- **操配表（俯瞰マトリクス）**: 作業員 × 日 の月間マトリクスで、誰がいつどの現場か・休みかを一覧表示（既存Excel「操配表」の再現）
+- **操配表（俯瞰マトリクス）**: 作業員 × 日 の月間マトリクスで、誰がいつどの現場か・休みかを一覧表示（既存Excel「操配表」の再現）。各セルの隅には作業/役割の**略号（副セル）**（幅・真・下・W・10t 等）を表示し、Excelの手書き注記を再現
 - **作業員ごとの作業時間**: 配置メンバーごとに始/終を個別設定（既定は案件全体の時間）
 - **車両管理**: 社有車両（営業車/連絡車/Wキャブ/レンタカー/機動）をマスタ管理し、案件へ割当
 - **マイスケジュール**: 担当者ごとに、自分の案件を日付順のアジェンダで表示
 - **カレンダー**: TIMETREE風の月表示。プロジェクト（案件）と軽量な予定を色分け表示し、日付から予定・案件を直接追加。担当者で絞り込み可能
 - **予定の担当者ひも付け**: 予定（有給・不在・研修など）に作業員をひも付け可能。ひも付けた人はその日に他案件へ割り当て不可になり、本人のマイスケジュールにも表示される
 - **勤怠・休暇の種別**: 予定に種別（年休/PM年休/振休/褒賞休暇/病欠/病院/コロナ/段取り/移動/待機/研修/各種会議/始業式 など）を設定可能。既存Excel（操配表）の語彙に準拠。「占有」種別（休暇・段取り等）はその日の割当を自動でブロック、会議・待機など非占有の種別は制限しない
+- **作業計画表（印刷/PDF）**: 日付を選ぶと、その日に稼働する案件をJOBごとに1ブロックで並べたA4帳票を表示。JOB No./顧客/現場/営業/発注形態/作業内容/配員（略号・個別時間・リーダー/連絡係）/下請・傭車/車両/備考＋その日の勤怠・不在をまとめ、ブラウザ印刷でそのままPDF保存・紙配布できる（既存Excel「作業計画表」の印刷運用を置き換え）
 - **社外作業戦力（下請・傭車）**: 協力業者を「下請／傭車」で区分。人数・代表者名（傭車はドライバー氏名）・開始/終了時刻に加え、傭車は車番・車種まで登録可能（作業計画表の欄に準拠）
 - **データベース連携**: Supabase PostgreSQL対応
 
@@ -155,22 +156,41 @@ expo export:web
 
 ## API エンドポイント
 
+バックエンドは `worker/`（Cloudflare Workers + Hono + D1 + drizzle）。フロントは
+`VITE_API_BASE_URL` 経由で以下を呼び、DB未接続時はモックデータ＋localStorageで動作します。
+
 - `GET /api/health` - データベース接続確認
-- `GET /api/members` - メンバー一覧取得
-- `PUT /api/members` - メンバー更新
-- `GET /api/projects` - プロジェクト一覧取得
-- `PUT /api/projects` - プロジェクト更新
-- `GET /api/external-partners` - 協力業者一覧取得
-- `PUT /api/external-partners` - 協力業者更新
+- `GET /api/members` / `PUT /api/members` - メンバー取得・更新
+- `GET /api/projects` / `PUT /api/projects` - プロジェクト取得・更新（JOB No./顧客名/営業担当/発注形態/終了日/連絡係/作業員別始終/割当車両/下請・傭車の詳細まで永続化）
+- `GET /api/external-partners` / `PUT /api/external-partners` - 協力業者取得・更新
+- `GET /api/labels` / `POST` / `PUT /:id` / `DELETE /:id` - ラベル
+- `GET /api/vehicles` / `PUT /api/vehicles` / `DELETE /:id` - 社有車両マスタ
+- `GET /api/calendar-events` / `POST` / `PUT /:id` / `DELETE /:id` - カレンダー予定（作業員ひも付け・勤怠種別を含む）
 
 ## データベーススキーマ
 
-主要テーブル:
+主要テーブル（`worker/src/db/schema.ts`。bootstrap用SQLは `worker/schema.sql`）:
 - `members` - メンバー情報
-- `projects` - プロジェクト情報
+- `projects` - プロジェクト情報（JOB No./顧客名/営業担当/発注形態/終了日/連絡係ほか）
 - `external_partners` - 協力業者情報
-- `project_member_assignments` - メンバー配置
-- `project_external_partner_assignments` - 協力業者配置
+- `vehicles` - 社有車両マスタ
+- `calendar_events` / `calendar_event_members` - カレンダー予定と作業員ひも付け
+- `project_member_assignments` - メンバー配置（作業員別の始/終を含む）
+- `project_vehicle_assignments` - 車両割当
+- `project_external_partner_assignments` - 協力業者配置（下請/傭車の区分・時刻・車番・車種）
+
+### D1 の初期化（バックエンド連携）
+
+```bash
+cd worker
+npm install
+npx wrangler d1 create ongoing-projects-db   # 出力の database_id を wrangler.toml に貼る
+npx wrangler d1 execute DB --file=./schema.sql --remote   # スキーマ適用（--local でローカルにも）
+npm run deploy                                 # Worker をデプロイ
+```
+
+デプロイした Worker の URL をフロントの `.env`（`VITE_API_BASE_URL`）に設定すると、
+`/api/health` が通り自動的にDBモードへ切り替わります。
 
 ## 開発コマンド
 

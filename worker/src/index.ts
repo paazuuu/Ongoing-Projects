@@ -9,6 +9,8 @@ import { labelRoutes } from './routes/labels';
 import { checklistRoutes } from './routes/checklist';
 import { commentRoutes } from './routes/comments';
 import { attachmentRoutes } from './routes/attachments';
+import { vehicleRoutes } from './routes/vehicles';
+import { calendarEventRoutes } from './routes/calendarEvents';
 
 const app = new Hono<{ Bindings: Env }>();
 
@@ -32,5 +34,7 @@ app.route('/api/labels', labelRoutes);
 app.route('/api', checklistRoutes);
 app.route('/api', commentRoutes);
 app.route('/api/attachments', attachmentRoutes);
+app.route('/api/vehicles', vehicleRoutes);
+app.route('/api/calendar-events', calendarEventRoutes);
 
 export default app;

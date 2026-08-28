@@ -36,6 +36,7 @@ export interface Project {
   notes: string;
   assignedMembers: string[];
   memberTimes?: { [memberId: string]: { start: string; end: string } }; // 作業員ごとの始/終（未設定は案件全体の作業時間）
+  memberRoleCodes?: { [memberId: string]: string }; // 作業員ごとの作業/役割の略号（操配表の副セル：幅・真・下・W・10t 等）
   leadMemberId?: string; // リーダー（担当）メンバーID
   contactMemberId?: string; // 連絡係メンバーID（臨時で変わることがある）
   assignedVehicleIds?: string[]; // 社有車両の割当
