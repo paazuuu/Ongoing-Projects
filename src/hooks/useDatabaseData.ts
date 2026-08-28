@@ -75,12 +75,13 @@ export const useDatabaseData = () => {
   const loadData = async () => {
     setIsLoading(true);
     try {
-      const [membersData, projectsData, partnersData, labelsData, eventsData] = await Promise.all([
+      const [membersData, projectsData, partnersData, labelsData, eventsData, vehiclesData] = await Promise.all([
         apiFetch<Member[]>('/api/members'),
         apiFetch<Project[]>('/api/projects'),
         apiFetch<ExternalPartner[]>('/api/external-partners'),
         apiFetch<Label[]>('/api/labels'),
         apiFetch<CalendarEvent[]>('/api/calendar-events'),
+        apiFetch<Vehicle[]>('/api/vehicles'),
       ]);
 
       if (membersData) setMembers(membersData);
@@ -88,6 +89,7 @@ export const useDatabaseData = () => {
       if (partnersData) setExternalPartners(partnersData);
       if (labelsData) setLabels(labelsData);
       if (eventsData) setCalendarEvents(eventsData);
+      if (vehiclesData) setVehicles(vehiclesData);
     } catch (error) {
       console.error('データ読み込みエラー:', error);
       // エラーが発生した場合はモックデータを継続使用

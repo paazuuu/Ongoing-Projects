@@ -188,17 +188,14 @@ const MatrixView: React.FC<MatrixViewProps> = ({ projects, members, calendarEven
                             key={`${item.kind}-${item.id}-${idx}`}
                             onClick={() => handleItemClick(item)}
                             title={item.sub ? `${item.label}（${item.sub}）` : item.label}
-                            className={`relative text-[9px] leading-tight rounded px-1 py-0.5 text-white truncate ${
+                            className={`flex items-center gap-0.5 text-[9px] leading-tight rounded px-1 py-0.5 text-white ${
                               item.kind === 'project' ? 'cursor-pointer hover:opacity-90' : ''
                             }`}
                             style={{ backgroundColor: item.color }}
                           >
-                            {item.label}
+                            <span className="truncate flex-1 min-w-0">{item.label}</span>
                             {item.sub && (
-                              <span
-                                className="absolute -top-1 -right-1 bg-white text-gray-800 border border-gray-300 rounded px-0.5 text-[8px] font-bold leading-none shadow-sm"
-                                title={`略号: ${item.sub}`}
-                              >
+                              <span className="flex-shrink-0 bg-white/90 text-gray-800 rounded px-0.5 text-[8px] font-bold leading-none">
                                 {item.sub}
                               </span>
                             )}

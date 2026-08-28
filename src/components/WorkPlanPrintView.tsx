@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Project, Member, ExternalPartner, Vehicle, CalendarEvent } from '../types';
 import { projectDateRange, rangesOverlap } from '../utils/availability';
 import { getEventType } from '../utils/eventTypes';
@@ -25,6 +25,12 @@ const WorkPlanPrintView: React.FC<WorkPlanPrintViewProps> = ({
 }) => {
   const [date, setDate] = useState(todayKey());
 
+  // このビュー表示中のみ body に印刷用クラスを付与（他ビューの通常印刷を壊さない）
+  useEffect(() => {
+    document.body.classList.add('print-workplan');
+    return () => document.body.classList.remove('print-workplan');
+  }, []);
+
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const partnerById = useMemo(() => new Map(externalPartners.map((p) => [p.id, p])), [externalPartners]);
   const vehicleById = useMemo(() => new Map(vehicles.map((v) => [v.id, v])), [vehicles]);
@@ -32,7 +38,6 @@ const WorkPlanPrintView: React.FC<WorkPlanPrintViewProps> = ({
   // その日に稼働する案件（単日・複数日の期間内）
   const dayProjects = useMemo(() => {
     return projects
-      .filter((p) => p.isActive)
       .filter((p) => {
         const r = projectDateRange(p);
         return rangesOverlap(date, date, r.start, r.end);
@@ -45,6 +50,21 @@ const WorkPlanPrintView: React.FC<WorkPlanPrintViewProps> = ({
     () => calendarEvents.filter((e) => e.date === date && e.memberIds.length > 0),
     [calendarEvents, date]
   );
+
+  // 集計（延べ人数・社外台数）— 現場責任者が一目で把握できるように
+  const totals = useMemo(() => {
+    let staff = 0;
+    let subcontractors = 0;
+    let hiredVehicles = 0;
+    for (const p of dayProjects) {
+      staff += p.assignedMembers.length;
+      for (const a of p.externalPartners) {
+        if (a.kind === 'hired_vehicle') hiredVehicles += a.memberCount;
+        else subcontractors += a.memberCount;
+      }
+    }
+    return { staff, subcontractors, hiredVehicles };
+  }, [dayProjects]);
 
   const memberTime = (p: Project, memberId: string) =>
     p.memberTimes?.[memberId] ?? { start: p.workTime.start, end: p.workTime.end };
@@ -99,7 +119,11 @@ const WorkPlanPrintView: React.FC<WorkPlanPrintViewProps> = ({
             </div>
             <div className="text-right">
               <div className="text-lg font-bold text-gray-900">{formatDateHeading(date)}</div>
-              <div className="text-xs text-gray-500">JOB件数: {dayProjects.length}</div>
+              <div className="text-xs text-gray-500">
+                JOB {dayProjects.length}件 / 社員延べ {totals.staff}名
+                {totals.subcontractors > 0 && ` / 下請 ${totals.subcontractors}名`}
+                {totals.hiredVehicles > 0 && ` / 傭車 ${totals.hiredVehicles}台`}
+              </div>
             </div>
           </div>
 
