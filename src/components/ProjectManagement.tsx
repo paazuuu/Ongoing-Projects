@@ -13,8 +13,9 @@ import KanbanBoard from './KanbanBoard';
 import CalendarView from './CalendarView';
 import MyScheduleView from './MyScheduleView';
 import MatrixView from './MatrixView';
+import WorkPlanPrintView from './WorkPlanPrintView';
 import DebugPanel from './DebugPanel';
-import { Plus, Users, FolderOpen, Home, Building2, Trello, CalendarDays, CalendarClock, Car, Grid3x3 } from 'lucide-react';
+import { Plus, Users, FolderOpen, Home, Building2, Trello, CalendarDays, CalendarClock, Car, Grid3x3, Printer } from 'lucide-react';
 import { checkScheduleConflicts } from '../utils/conflictChecker';
 
 interface ProjectManagementProps {
@@ -67,6 +68,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
   const [showMySchedule, setShowMySchedule] = useState(false);
   const [showVehicleManagement, setShowVehicleManagement] = useState(false);
   const [showMatrix, setShowMatrix] = useState(false);
+  const [showWorkPlan, setShowWorkPlan] = useState(false);
   const [formDefaultDate, setFormDefaultDate] = useState<string | undefined>(undefined);
   const [conflicts, setConflicts] = useState<ConflictAlert[]>([]);
 
@@ -84,6 +86,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(false);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleCreateProject = () => {
@@ -99,6 +102,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(false);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleShowMemberManagement = () => {
@@ -113,6 +117,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(false);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleShowPartnerManagement = () => {
@@ -127,6 +132,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(false);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleShowDashboard = () => {
@@ -141,6 +147,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(false);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleShowKanbanBoard = () => {
@@ -155,6 +162,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(false);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleShowCalendar = () => {
@@ -169,6 +177,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(false);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleShowMySchedule = () => {
@@ -183,6 +192,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(true);
     setShowVehicleManagement(false);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleShowVehicleManagement = () => {
@@ -197,6 +207,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(true);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleShowMatrix = () => {
@@ -211,6 +222,22 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(false);
     setShowMatrix(true);
+    setShowWorkPlan(false);
+  };
+
+  const handleShowWorkPlan = () => {
+    setSelectedProject(null);
+    setSelectedMember(null);
+    setShowProjectForm(false);
+    setShowMemberManagement(false);
+    setShowPartnerManagement(false);
+    setShowDashboard(false);
+    setShowKanbanBoard(false);
+    setShowCalendar(false);
+    setShowMySchedule(false);
+    setShowVehicleManagement(false);
+    setShowMatrix(false);
+    setShowWorkPlan(true);
   };
 
   const handleCreateProjectForDate = (date: string) => {
@@ -226,6 +253,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(false);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleProjectStatusChange = (projectId: string, workflowStatus: ProjectWorkflowStatus) => {
@@ -317,6 +345,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setShowMySchedule(false);
     setShowVehicleManagement(false);
     setShowMatrix(false);
+    setShowWorkPlan(false);
   };
 
   const handleEditSelectedMember = () => {
@@ -440,6 +469,17 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
               <Car className="w-4 h-4" />
               車両管理
             </button>
+            <button
+              onClick={handleShowWorkPlan}
+              className={`w-full flex items-center gap-2 px-4 py-2 rounded-lg transition-all duration-200 ${
+                showWorkPlan
+                  ? 'bg-white bg-opacity-30 text-white'
+                  : 'bg-white bg-opacity-20 hover:bg-opacity-30 text-white'
+              }`}
+            >
+              <Printer className="w-4 h-4" />
+              作業計画表（印刷）
+            </button>
           </div>
         </div>
 
@@ -472,7 +512,15 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
 
       {/* メインコンテンツ */}
       <div className="flex-1 flex flex-col">
-        {showMatrix ? (
+        {showWorkPlan ? (
+          <WorkPlanPrintView
+            projects={activeProjects}
+            members={activeMembers}
+            externalPartners={externalPartners}
+            vehicles={vehicles}
+            calendarEvents={calendarEvents}
+          />
+        ) : showMatrix ? (
           <MatrixView
             projects={activeProjects}
             members={activeMembers}
