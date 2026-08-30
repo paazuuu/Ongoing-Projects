@@ -90,22 +90,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     setView(next);
   };
 
-  const handleShowDashboard = () => goTo('dashboard');
-  const handleShowMemberManagement = () => goTo('members');
-  const handleShowPartnerManagement = () => goTo('partners');
-  const handleShowKanbanBoard = () => goTo('kanban');
-  const handleShowCalendar = () => goTo('calendar');
-  const handleShowMySchedule = () => goTo('mySchedule');
-  const handleShowVehicleManagement = () => goTo('vehicles');
-  const handleShowMatrix = () => goTo('matrix');
-  const handleShowWorkPlan = () => goTo('workPlan');
-
-  const handleCreateProject = () => {
-    setSelectedProject(null);
-    setSelectedMember(null);
-    setFormDefaultDate(undefined);
-    setView('projectForm');
-  };
+  const handleCreateProject = () => goTo('projectForm');
 
   const handleCreateProjectForDate = (date: string) => {
     setSelectedProject(null);
@@ -161,6 +146,7 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     }
 
     onUpdateProjects(updatedProjects);
+    setSelectedProject(null);
     setFormDefaultDate(undefined);
     setView('dashboard');
 
@@ -230,36 +216,36 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
     ? projects.find(p => p.id === selectedProject.id) ?? selectedProject
     : null;
 
-  // サイドバーのナビ定義（グループ分けで見やすく）
-  const navGroups: { title: string; items: { key: ViewKey; label: string; icon: typeof Home; onClick: () => void; accent?: boolean }[] }[] = [
+  // サイドバーのナビ定義（グループ分けで見やすく）。各項目は goTo(key) で遷移。
+  const navGroups: { title: string; items: { key: ViewKey; label: string; icon: typeof Home; accent?: boolean }[] }[] = [
     {
       title: '俯瞰・進捗',
       items: [
-        { key: 'dashboard', label: 'ダッシュボード', icon: Home, onClick: handleShowDashboard },
-        { key: 'kanban', label: 'ステータスボード', icon: Trello, onClick: handleShowKanbanBoard },
-        { key: 'calendar', label: 'カレンダー', icon: CalendarDays, onClick: handleShowCalendar },
-        { key: 'matrix', label: '操配表', icon: Grid3x3, onClick: handleShowMatrix },
+        { key: 'dashboard', label: 'ダッシュボード', icon: Home },
+        { key: 'kanban', label: 'ステータスボード', icon: Trello },
+        { key: 'calendar', label: 'カレンダー', icon: CalendarDays },
+        { key: 'matrix', label: '操配表', icon: Grid3x3 },
       ],
     },
     {
       title: '案件・割り振り',
       items: [
-        { key: 'projectForm', label: '新規プロジェクト', icon: Plus, onClick: handleCreateProject, accent: true },
+        { key: 'projectForm', label: '新規プロジェクト', icon: Plus, accent: true },
       ],
     },
     {
       title: '個人・出力',
       items: [
-        { key: 'mySchedule', label: 'マイスケジュール', icon: CalendarClock, onClick: handleShowMySchedule },
-        { key: 'workPlan', label: '作業計画表（印刷）', icon: Printer, onClick: handleShowWorkPlan },
+        { key: 'mySchedule', label: 'マイスケジュール', icon: CalendarClock },
+        { key: 'workPlan', label: '作業計画表（印刷）', icon: Printer },
       ],
     },
     {
       title: 'マスタ管理',
       items: [
-        { key: 'members', label: 'メンバー管理', icon: Users, onClick: handleShowMemberManagement },
-        { key: 'partners', label: '協力業者管理', icon: Building2, onClick: handleShowPartnerManagement },
-        { key: 'vehicles', label: '車両管理', icon: Car, onClick: handleShowVehicleManagement },
+        { key: 'members', label: 'メンバー管理', icon: Users },
+        { key: 'partners', label: '協力業者管理', icon: Building2 },
+        { key: 'vehicles', label: '車両管理', icon: Car },
       ],
     },
   ];
@@ -282,12 +268,17 @@ const ProjectManagement: React.FC<ProjectManagementProps> = ({
               </div>
               <div className="space-y-1">
                 {group.items.map((item) => {
-                  const isActive = view === item.key;
+                  // 新規プロジェクトは「新規作成中(selectedProject無し)」のみ選択表示。
+                  // 既存案件の編集時はハイライトしない。
+                  const isActive =
+                    item.key === 'projectForm'
+                      ? view === 'projectForm' && !selectedProject
+                      : view === item.key;
                   const Icon = item.icon;
                   return (
                     <button
                       key={item.key}
-                      onClick={item.onClick}
+                      onClick={() => goTo(item.key)}
                       aria-current={isActive ? 'page' : undefined}
                       className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                         isActive
